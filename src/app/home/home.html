@@ -1,0 +1,66 @@
+<!-- home.html -->
+<div class="chat-container">
+  <!-- Header -->
+  <div class="chat-header">
+    <h1>GlobalChat</h1>
+  </div>
+
+  <!-- Messages Area -->
+  <div class="chat-messages">
+    <div
+      *ngFor="let message of messages"
+      class="message-wrapper"
+      [class.user-message]="message.isUser"
+      [class.bot-message]="!message.isUser"
+    >
+      <div class="message-bubble">
+        <div class="message-text">{{ message.text }}</div>
+        <div class="message-time">{{ message.timestamp | date:'short' }}</div>
+      </div>
+    </div>
+
+    <!-- Loading indicator -->
+    <div *ngIf="isLoading" class="message-wrapper bot-message">
+      <div class="message-bubble loading">
+        <div class="typing-indicator">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input Area -->
+  <div class="chat-input">
+    <div class="input-container">
+      <textarea
+        [(ngModel)]="currentMessage"
+        (keydown)="onKeyPress($event)"
+        placeholder="Type your message here..."
+        class="message-input"
+        rows="1"
+        [disabled]="isLoading"
+      >
+      </textarea>
+
+      <button
+        (click)="sendMessage()"
+        [disabled]="currentMessage.trim() === '' || isLoading"
+        class="send-button"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22,2 15,22 11,13 2,9"></polygon>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>

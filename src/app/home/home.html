@@ -2,7 +2,30 @@
 <div class="chat-container">
   <!-- Header -->
   <div class="chat-header">
-    <h1>GlobalChat</h1>
+    <div class="header-content">
+      <h1>GlobalChat</h1>
+      <span class="subtitle">Connect with the world</span>
+    </div>
+    <div class="header-right">
+      <div class="online-indicator">
+        <div class="online-dot"></div>
+        <span>{{ onlineUsers.length }} Online</span>
+      </div>
+
+      <button class="profile-button" (click)="toggleMenu()">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <!-- Messages Area -->
@@ -10,23 +33,21 @@
     <div
       *ngFor="let message of messages"
       class="message-wrapper"
-      [class.user-message]="message.isUser"
-      [class.bot-message]="!message.isUser"
+      [class.own-message]="message.isOwnMessage"
+      [class.system-message]="message.userId === 'system'"
     >
       <div class="message-bubble">
-        <div class="message-text">{{ message.text }}</div>
-        <div class="message-time">{{ message.timestamp | date:'short' }}</div>
-      </div>
-    </div>
-
-    <!-- Loading indicator -->
-    <div *ngIf="isLoading" class="message-wrapper bot-message">
-      <div class="message-bubble loading">
-        <div class="typing-indicator">
-          <span></span>
-          <span></span>
-          <span></span>
+        <div
+          class="message-header"
+          *ngIf="!message.isOwnMessage && message.userId !== 'system'"
+        >
+          <span class="username">{{ message.username }}</span>
+          <span class="country">{{ message.country }}</span>
         </div>
+
+        <div class="message-text">{{ message.text }}</div>
+
+        <div class="message-time">{{ message.timestamp | date:'HH:mm' }}</div>
       </div>
     </div>
   </div>
@@ -34,19 +55,23 @@
   <!-- Input Area -->
   <div class="chat-input">
     <div class="input-container">
+      <div class="user-indicator">
+        <span class="your-flag">{{ currentUser.country }}</span>
+        <span class="your-name">{{ currentUser.username }}</span>
+      </div>
+
       <textarea
         [(ngModel)]="currentMessage"
         (keydown)="onKeyPress($event)"
-        placeholder="Type your message here..."
+        placeholder="Share your message with the world..."
         class="message-input"
         rows="1"
-        [disabled]="isLoading"
       >
       </textarea>
 
       <button
         (click)="sendMessage()"
-        [disabled]="currentMessage.trim() === '' || isLoading"
+        [disabled]="currentMessage.trim() === ''"
         class="send-button"
       >
         <svg

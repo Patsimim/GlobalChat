@@ -46,6 +46,10 @@
         <span *ngIf="isLoading">Logging in...</span>
         <span *ngIf="!isLoading">Login</span>
       </button>
+      <div class="register-link">
+        Don't have an account?
+        <a (click)="goToRegister()" class="register-anchor">Create Account</a>
+      </div>
     </form>
   </div>
 </div>

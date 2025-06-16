@@ -48,7 +48,7 @@ label {
   width: 100%;
   padding: 0.75rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #232946;
+  color: #fffffe;
   border: none;
   border-radius: 8px;
   font-size: 1rem;
@@ -71,6 +71,29 @@ label {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+.register-link {
+  text-align: center;
+  margin-top: 20px;
+  color: #b8c1ec;
+  font-size: 14px;
+
+  .register-anchor {
+    color: #667eea;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: #8ba3f0;
+      text-decoration: underline;
+    }
+
+    &:active {
+      color: #5a6fd8;
+    }
+  }
 }
 
 .error,

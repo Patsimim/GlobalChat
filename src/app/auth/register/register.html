@@ -1,0 +1,163 @@
+<!-- src/app/auth/register/register.html -->
+<div class="register-container">
+  <div class="register-card">
+    <div class="register-header">
+      <h1>Create Account</h1>
+      <p>Join GlobalChat today</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" #registerForm="ngForm" class="register-form">
+      <!-- Name Fields Row -->
+      <div class="form-row">
+        <div class="form-group half">
+          <label for="firstName">First Name</label>
+          <input
+            type="text"
+            id="firstName"
+            name="firstName"
+            [(ngModel)]="registerData.firstName"
+            #firstName="ngModel"
+            required
+            placeholder="First name"
+            [class.error]="firstName.invalid && firstName.touched"
+            [disabled]="isLoading"
+          />
+          <div
+            *ngIf="firstName.invalid && firstName.touched"
+            class="error-message"
+          >
+            First name is required
+          </div>
+        </div>
+
+        <div class="form-group half">
+          <label for="lastName">Last Name</label>
+          <input
+            type="text"
+            id="lastName"
+            name="lastName"
+            [(ngModel)]="registerData.lastName"
+            #lastName="ngModel"
+            required
+            placeholder="Last name"
+            [class.error]="lastName.invalid && lastName.touched"
+            [disabled]="isLoading"
+          />
+          <div
+            *ngIf="lastName.invalid && lastName.touched"
+            class="error-message"
+          >
+            Last name is required
+          </div>
+        </div>
+      </div>
+
+      <!-- Email Field -->
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          [(ngModel)]="registerData.email"
+          #email="ngModel"
+          required
+          email
+          placeholder="Enter your email"
+          [class.error]="email.invalid && email.touched"
+          [disabled]="isLoading"
+        />
+        <div *ngIf="email.invalid && email.touched" class="error-message">
+          <span *ngIf="email.errors?.['required']">Email is required</span>
+          <span *ngIf="email.errors?.['email']"
+            >Please enter a valid email</span
+          >
+        </div>
+      </div>
+
+      <!-- Country Field -->
+      <div class="form-group">
+        <label for="country">Country</label>
+        <input
+          type="text"
+          id="country"
+          name="country"
+          [(ngModel)]="registerData.country"
+          #country="ngModel"
+          required
+          placeholder="Enter your country"
+          [class.error]="country.invalid && country.touched"
+          [disabled]="isLoading"
+        />
+        <div *ngIf="country.invalid && country.touched" class="error-message">
+          Country is required
+        </div>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="password-input-container">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            name="password"
+            [(ngModel)]="registerData.password"
+            #password="ngModel"
+            required
+            minlength="6"
+            placeholder="Create a password (min 6 characters)"
+            [class.error]="password.invalid && password.touched"
+            [disabled]="isLoading"
+          />
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="togglePasswordVisibility()"
+            [disabled]="isLoading"
+          >
+            <span *ngIf="!showPassword">👁️</span>
+            <span *ngIf="showPassword">🙈</span>
+          </button>
+        </div>
+        <div *ngIf="password.invalid && password.touched" class="error-message">
+          <span *ngIf="password.errors?.['required']"
+            >Password is required</span
+          >
+          <span *ngIf="password.errors?.['minlength']"
+            >Password must be at least 6 characters</span
+          >
+        </div>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        class="register-button"
+        [disabled]="registerForm.invalid || isLoading"
+      >
+        <span *ngIf="!isLoading">Create Account</span>
+        <span *ngIf="isLoading" class="loading-spinner">
+          <span class="spinner"></span>
+          Creating account...
+        </span>
+      </button>
+    </form>
+
+    <!-- Login Link -->
+    <div class="login-link">
+      <p>Already have an account?</p>
+      <button
+        type="button"
+        class="link-button primary"
+        (click)="navigateToLogin()"
+        [disabled]="isLoading"
+      >
+        Sign In
+      </button>
+    </div>
+  </div>
+</div>

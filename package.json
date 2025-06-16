@@ -3,10 +3,15 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "start": "npm run env:dev && ng serve",
+    "build": "npm run env:dev && ng build",
+    "build:prod": "npm run env:prod && ng build --configuration=production",
+    "serve:prod": "npm run env:prod && ng serve --configuration=production",
+    "watch": "npm run env:dev && ng build --watch --configuration development",
+    "test": "ng test",
+    "env:dev": "node scripts/set-env.js",
+    "env:prod": "NODE_ENV=production node scripts/set-env.js",
+    "postinstall": "npm run env:dev"
   },
   "private": true,
   "dependencies": {
@@ -25,6 +30,7 @@
     "@angular/cli": "^20.0.2",
     "@angular/compiler-cli": "^20.0.0",
     "@types/jasmine": "~5.1.0",
+    "dotenv": "^16.5.0",
     "jasmine-core": "~5.7.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",

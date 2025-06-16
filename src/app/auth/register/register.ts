@@ -1,20 +1,23 @@
-// src/app/auth/login/login.ts
+// src/app/auth/register/register.ts
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService } from '../../services/auth.service';
+import { AuthService, RegisterRequest } from '../../services/auth.service';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-register',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './login.html',
-  styleUrl: './login.scss',
+  templateUrl: './register.html',
+  styleUrl: './register.scss',
 })
-export class LoginComponent {
-  loginData = {
+export class RegisterComponent {
+  registerData: RegisterRequest = {
+    firstName: '',
+    lastName: '',
     email: '',
+    country: '',
     password: '',
   };
 
@@ -37,17 +40,15 @@ export class LoginComponent {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.authService.login(this.loginData).subscribe({
+    this.authService.register(this.registerData).subscribe({
       next: (response) => {
-        console.log('Login successful:', response);
-        // Navigate to home page
+        console.log('Registration successful:', response);
         this.router.navigate(['/home']);
       },
       error: (error) => {
-        console.error('Login error:', error);
+        console.error('Registration error:', error);
         this.errorMessage =
-          error.error?.message ||
-          'Login failed. Please check your credentials.';
+          error.error?.message || 'Registration failed. Please try again.';
         this.isLoading = false;
       },
       complete: () => {
@@ -57,18 +58,38 @@ export class LoginComponent {
   }
 
   private validateForm(): boolean {
-    if (!this.loginData.email.trim()) {
+    if (!this.registerData.firstName.trim()) {
+      this.errorMessage = 'First name is required';
+      return false;
+    }
+
+    if (!this.registerData.lastName.trim()) {
+      this.errorMessage = 'Last name is required';
+      return false;
+    }
+
+    if (!this.registerData.email.trim()) {
       this.errorMessage = 'Email is required';
       return false;
     }
 
-    if (!this.loginData.password) {
+    if (!this.registerData.country.trim()) {
+      this.errorMessage = 'Country is required';
+      return false;
+    }
+
+    if (!this.registerData.password) {
       this.errorMessage = 'Password is required';
       return false;
     }
 
+    if (this.registerData.password.length < 6) {
+      this.errorMessage = 'Password must be at least 6 characters long';
+      return false;
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(this.loginData.email)) {
+    if (!emailRegex.test(this.registerData.email)) {
       this.errorMessage = 'Please enter a valid email address';
       return false;
     }
@@ -78,5 +99,9 @@ export class LoginComponent {
 
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
+  }
+
+  navigateToLogin() {
+    this.router.navigate(['/login']);
   }
 }

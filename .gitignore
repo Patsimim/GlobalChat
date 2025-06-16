@@ -1,42 +1,49 @@
-# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+# Environment variables
+.env.local
+.env.*.local
+.env.staging
 
-# Compiled output
-/dist
-/tmp
-/out-tsc
-/bazel-out
+# Keep .env and .env.production for team sharing (without sensitive data)
+# Add .env to .gitignore if it contains sensitive information
+# .env
+# .env.production
+
+# Auto-generated environment file
+src/environments/environment.ts
+
+# Dependencies
+node_modules/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Angular
+dist/
+tmp/
+out-tsc/
+bazel-out/
 
 # Node
-/node_modules
 npm-debug.log
 yarn-error.log
 
-# IDEs and editors
-.idea/
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# Visual Studio Code
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.history/*
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
 
-# Miscellaneous
-/.angular/cache
-.sass-cache/
-/connect.lock
-/coverage
-/libpeerconnection.log
-testem.log
-/typings
-
-# System files
-.DS_Store
-Thumbs.db
+# Logs
+logs
+*.log

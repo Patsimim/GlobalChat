@@ -1,18 +1,20 @@
 // src/app/auth/register/register.ts
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { AuthService, RegisterRequest } from '../../services/auth.service';
+import { CountryService, Country } from '../../services/country.service';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NgSelectModule],
   templateUrl: './register.html',
   styleUrl: './register.scss',
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   registerData: RegisterRequest = {
     firstName: '',
     lastName: '',
@@ -21,15 +23,30 @@ export class RegisterComponent {
     password: '',
   };
 
+  countries: Country[] = [];
+  selectedCountry: Country | null = null;
   errorMessage = '';
   isLoading = false;
   showPassword = false;
 
-  constructor(private router: Router, private authService: AuthService) {
+  constructor(
+    private router: Router,
+    private authService: AuthService,
+    private countryService: CountryService
+  ) {
     // Redirect if already logged in
     if (this.authService.isLoggedIn()) {
       this.router.navigate(['/home']);
     }
+  }
+
+  ngOnInit() {
+    this.countries = this.countryService.getAllCountries();
+  }
+
+  onCountryChange(country: Country) {
+    this.selectedCountry = country;
+    this.registerData.country = country ? country.name : '';
   }
 
   onSubmit() {

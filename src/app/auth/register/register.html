@@ -77,19 +77,27 @@
 
       <!-- Country Field -->
       <div class="form-group">
-        <label for="country">Country</label>
-        <input
-          type="text"
-          id="country"
+        <label for="country">Country:</label>
+        <ng-select
+          [(ngModel)]="selectedCountry"
+          [items]="countries"
+          bindLabel="name"
+          bindValue="name"
+          placeholder="Select your country"
+          [searchable]="true"
+          [clearable]="true"
           name="country"
-          [(ngModel)]="registerData.country"
-          #country="ngModel"
           required
-          placeholder="Enter your country"
-          [class.error]="country.invalid && country.touched"
+          #country="ngModel"
+          (change)="onCountryChange($event)"
+          class="custom-ng-select"
           [disabled]="isLoading"
-        />
-        <div *ngIf="country.invalid && country.touched" class="error-message">
+        >
+          <ng-option *ngFor="let country of countries" [value]="country">
+            <span>{{ country.flag }} {{ country.name }}</span>
+          </ng-option>
+        </ng-select>
+        <div *ngIf="country.invalid && country.touched" class="error">
           Country is required
         </div>
       </div>

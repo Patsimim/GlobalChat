@@ -1,11 +1,17 @@
 import {
+  CdkScrollableModule,
+  ScrollDispatcher,
+  ScrollingModule,
+  ViewportRuler
+} from "./chunk-DE5WO7BE.js";
+import {
   MatRipple,
   MatRippleModule,
   _StructuralStylesLoader,
   _animationsDisabled,
   _isTestEnvironment,
   coerceCssPixelValue
-} from "./chunk-FM7UJXVS.js";
+} from "./chunk-7UUXTLD4.js";
 import {
   DOWN_ARROW,
   ENTER,
@@ -25,12 +31,6 @@ import {
   isFakeMousedownFromScreenReader,
   isFakeTouchstartFromScreenReader
 } from "./chunk-KVOBBVCP.js";
-import {
-  CdkScrollableModule,
-  ScrollDispatcher,
-  ScrollingModule,
-  ViewportRuler
-} from "./chunk-DE5WO7BE.js";
 import {
   supportsScrollBehavior
 } from "./chunk-EOFW2REK.js";

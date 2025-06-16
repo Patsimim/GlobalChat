@@ -7,6 +7,8 @@ import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService, User } from '../services/auth.service';
 
+import { MatIconModule } from '@angular/material/icon';
+
 interface OnlineUser {
   id: string;
   username: string;
@@ -27,7 +29,7 @@ interface Message {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatIconModule],
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })

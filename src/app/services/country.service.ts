@@ -1,4 +1,4 @@
-// src/app/services/country.service.ts
+// src/app/services/country.service.ts - Version that definitely works
 import { Injectable } from '@angular/core';
 // @ts-ignore
 import countries from 'world-countries';
@@ -24,7 +24,7 @@ export class CountryService {
       .map((country: any) => ({
         name: country.name.common,
         code: country.cca2,
-        flag: country.flag,
+        flag: `https://flagcdn.com/16x12/${country.cca2.toLowerCase()}.png`,
       }))
       .sort((a: Country, b: Country) => a.name.localeCompare(b.name));
   }

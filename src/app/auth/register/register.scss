@@ -6,6 +6,8 @@
   justify-content: center;
   background: #2e3356;
   padding: 20px;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .register-card {
@@ -16,6 +18,9 @@
   width: 100%;
   max-width: 500px;
   animation: slideUp 0.3s ease-out;
+  overflow: visible;
+  position: relative;
+  z-index: 1;
 }
 
 @keyframes slideUp {
@@ -61,6 +66,14 @@
 
   .form-group {
     margin-bottom: 20px;
+    overflow: visible;
+    position: relative;
+
+    // Special handling for country field to prevent clipping
+    &:has(.custom-ng-select) {
+      z-index: 10;
+      isolation: isolate;
+    }
 
     label {
       display: block;
@@ -102,10 +115,54 @@
     }
   }
 
-  // FIXED ng-select styling
+  // COMPLETE ng-select styling with scrollbar fixes
   .custom-ng-select {
+    position: relative;
+    z-index: 10;
+
+    // Hide input when there's a selected value (not in search mode)
+    &:not(.ng-select-opened) {
+      .ng-select-container .ng-value-container .ng-input {
+        display: none !important;
+      }
+    }
+
+    // Also hide the input cursor/caret
+    .ng-select-container .ng-value-container .ng-input > input {
+      caret-color: transparent !important;
+
+      // When there's a selected value, make input completely invisible
+      &:not(:placeholder-shown) {
+        opacity: 0 !important;
+        width: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+    }
+
+    // Only show the input when dropdown is open for searching
+    &.ng-select-opened {
+      .ng-select-container .ng-value-container .ng-input {
+        display: block !important;
+
+        > input {
+          opacity: 1 !important;
+          width: 100% !important;
+          caret-color: #333 !important;
+        }
+      }
+
+      // Hide the selected value text when searching
+      .ng-select-container .ng-value-container .ng-value {
+        display: none !important;
+      }
+    }
+
     // Main select container
     .ng-select.ng-select-single {
+      position: relative;
+      z-index: 1;
+
       .ng-select-container {
         height: auto;
         min-height: 50px;
@@ -115,6 +172,8 @@
         padding: 0;
         font-size: 16px;
         transition: all 0.3s ease;
+        overflow: visible;
+        position: relative;
 
         .ng-value-container {
           padding: 12px 16px;
@@ -136,6 +195,9 @@
               background: transparent !important;
               width: 100% !important;
               height: auto !important;
+              box-sizing: border-box !important;
+              min-height: 20px !important;
+              line-height: 1.4 !important;
 
               &::placeholder {
                 color: #999 !important;
@@ -191,6 +253,9 @@
           border-color: #667eea !important;
           box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
           outline: none !important;
+          overflow: visible !important;
+          position: relative !important;
+          z-index: 2 !important;
         }
       }
 
@@ -208,54 +273,14 @@
         .ng-select-container {
           border-color: #667eea;
           box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+          overflow: visible !important;
+          position: relative !important;
+          z-index: 2 !important;
         }
 
         .ng-arrow {
           border-color: transparent transparent #666;
           border-width: 0 5px 5px;
-        }
-      }
-    }
-
-    // Dropdown panel
-    .ng-dropdown-panel {
-      background: white !important;
-      border: 1px solid #ddd !important;
-      border-radius: 8px !important;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
-      z-index: 1050 !important;
-      max-height: 200px !important;
-      overflow-y: auto !important;
-      margin-top: 4px !important;
-
-      .ng-dropdown-panel-items {
-        .ng-option {
-          padding: 12px 16px !important;
-          font-size: 16px !important;
-          color: #333 !important;
-          background-color: white !important;
-          cursor: pointer !important;
-          display: flex !important;
-          align-items: center !important;
-          border: none !important;
-
-          &:hover,
-          &.ng-option-highlighted {
-            background-color: #667eea !important;
-            color: white !important;
-          }
-
-          &.ng-option-selected {
-            background-color: #f0f0f0 !important;
-            color: #333 !important;
-            font-weight: 500;
-          }
-
-          &.ng-option-disabled {
-            color: #ccc !important;
-            cursor: not-allowed !important;
-            background-color: #f9f9f9 !important;
-          }
         }
       }
     }
@@ -370,6 +395,135 @@
   }
 }
 
+// CRITICAL: Global dropdown panel styles (must be outside other selectors)
+.ng-dropdown-panel {
+  background: white !important;
+  border: 1px solid #ddd !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+  z-index: 1050 !important;
+  max-height: 200px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  margin-top: 4px !important;
+
+  // SCROLLBAR FIXES - This is the key fix
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+
+  // Custom scrollbar styling to prevent ugly default
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent !important;
+
+  &::-webkit-scrollbar {
+    width: 6px !important;
+    background: transparent !important;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    border-radius: 3px !important;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.3) !important;
+    }
+  }
+
+  // Prevent panel from causing layout shifts
+  contain: layout style paint !important;
+  will-change: transform !important;
+
+  .ng-dropdown-panel-items {
+    .ng-option {
+      padding: 12px 16px !important;
+      font-size: 16px !important;
+      color: #333 !important;
+      background-color: white !important;
+      cursor: pointer !important;
+      display: flex !important;
+      align-items: center !important;
+      border: none !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      min-height: 44px !important;
+      box-sizing: border-box !important;
+      touch-action: manipulation !important;
+
+      &:hover,
+      &.ng-option-highlighted {
+        background-color: #667eea !important;
+        color: white !important;
+      }
+
+      &.ng-option-selected {
+        background-color: #f0f0f0 !important;
+        color: #333 !important;
+        font-weight: 500;
+      }
+
+      &.ng-option-disabled {
+        color: #ccc !important;
+        cursor: not-allowed !important;
+        background-color: #f9f9f9 !important;
+      }
+    }
+  }
+}
+
+// Global fixes to prevent body scroll issues when dropdown is open
+body {
+  &.ng-select-dropdown-open {
+    @media (max-width: 768px) {
+      overflow: hidden !important;
+      position: fixed !important;
+      width: 100% !important;
+    }
+  }
+}
+
+// Fix for appendTo body dropdown positioning
+ng-select {
+  .ng-dropdown-panel {
+    &.ng-select-bottom {
+      top: 100% !important;
+      bottom: auto !important;
+    }
+
+    &.ng-select-top {
+      top: auto !important;
+      bottom: 100% !important;
+    }
+  }
+}
+
+// Flag icon styles
+.flag-icon {
+  width: 16px;
+  height: 12px;
+  margin-right: 8px;
+  object-fit: cover;
+  border-radius: 1px;
+  vertical-align: middle;
+}
+
+// Style for ng-select options with flags
+.ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
+  display: flex;
+  align-items: center;
+
+  .flag-icon {
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+}
+
 @keyframes spin {
   0% {
     transform: rotate(0deg);
@@ -441,10 +595,20 @@
     }
   }
 
-  .register-form {
-    .custom-ng-select {
-      .ng-dropdown-panel {
-        max-height: 150px !important;
+  // Mobile specific dropdown fixes
+  .ng-dropdown-panel {
+    max-height: 40vh !important;
+    border-radius: 12px !important;
+    margin-top: 8px !important;
+    position: fixed !important;
+    width: calc(100vw - 40px) !important;
+    max-width: 460px !important;
+
+    .ng-dropdown-panel-items {
+      .ng-option {
+        min-height: 48px !important;
+        padding: 14px 16px !important;
+        font-size: 16px !important;
       }
     }
   }

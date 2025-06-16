@@ -1,4 +1,4 @@
-<!-- src/app/auth/register/register.html -->
+<!-- src/app/auth/register/register.html - Fixed version with proper label associations -->
 <div class="register-container">
   <div class="register-card">
     <div class="register-header">
@@ -75,29 +75,45 @@
         </div>
       </div>
 
-      <!-- Country Field -->
+      <!-- Country Field-->
       <div class="form-group">
-        <label for="country">Country:</label>
+        <label for="country">Country</label>
         <ng-select
           [(ngModel)]="selectedCountry"
           [items]="countries"
           bindLabel="name"
-          bindValue="name"
+          bindValue="code"
           placeholder="Select your country"
           [searchable]="true"
           [clearable]="true"
+          [closeOnSelect]="true"
+          [selectOnTab]="true"
+          [loading]="false"
           name="country"
+          id="country"
           required
           #country="ngModel"
           (change)="onCountryChange($event)"
+          (clear)="onCountryClear()"
+          (open)="onDropdownOpen()"
+          (close)="onDropdownClose()"
           class="custom-ng-select"
+          [class.ng-select-focused]="isDropdownOpen"
           [disabled]="isLoading"
+          appendTo="body"
+          aria-label="Select your country"
         >
-          <ng-option *ngFor="let country of countries" [value]="country">
-            <span>{{ country.flag }} {{ country.name }}</span>
+          <!-- Custom option template with flag images -->
+          <ng-option *ngFor="let country of countries" [value]="country.code">
+            <img
+              [src]="country.flag"
+              [alt]="country.name + ' flag'"
+              class="flag-icon"
+            />
+            {{ country.name }}
           </ng-option>
         </ng-select>
-        <div *ngIf="country.invalid && country.touched" class="error">
+        <div *ngIf="country.invalid && country.touched" class="error-message">
           Country is required
         </div>
       </div>
@@ -123,6 +139,7 @@
             class="password-toggle"
             (click)="togglePasswordVisibility()"
             [disabled]="isLoading"
+            aria-label="Toggle password visibility"
           >
             <span *ngIf="!showPassword">👁️</span>
             <span *ngIf="showPassword">🙈</span>

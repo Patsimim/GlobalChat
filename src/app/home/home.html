@@ -7,129 +7,222 @@
 
   <!-- Main chat interface -->
   <div *ngIf="!isLoading && currentUser" class="chat-content">
-    <!-- Header -->
-    <div class="chat-header">
-      <div class="header-content">
-        <h1>GlobalChat</h1>
-        <span class="subtitle">Connect with the world</span>
-      </div>
-      <div class="header-right">
-        <div class="online-indicator">
-          <div class="online-dot"></div>
-          <span>{{ onlineUsers.length }} Online</span>
-        </div>
+    <!-- Chat Navigation Sidebar -->
+    <app-chat-navigation
+      [activeChatType]="activeChatType"
+      [selectedChatId]="selectedChatId"
+      [groups]="groups"
+      [privateChats]="privateChats"
+      [onlineUsers]="onlineUsers"
+      [onlineCount]="onlineUsersCount"
+      (chatTypeChange)="onChatTypeChange($event)"
+      (chatSelect)="onChatSelect($event)"
+      (createGroupClick)="onCreateGroup()"
+      (startPrivateChatClick)="onStartPrivateChat()"
+      (startPrivateChatWithUserClick)="onStartPrivateChatWithUser($event)"
+    ></app-chat-navigation>
 
-        <button class="profile-button" (click)="toggleMenu()">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
+    <!-- Main Chat Area -->
+    <div class="main-chat-area">
+      <!-- Chat Header -->
+      <div class="chat-header">
+        <div class="header-content">
+          <h1>{{ currentChatTitle }}</h1>
+          <span class="subtitle" *ngIf="activeChatType === 'world'"
+            >Connect with the world</span
           >
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- Profile Menu -->
-    <div class="profile-menu-overlay" *ngIf="isMenuOpen" (click)="toggleMenu()">
-      <div class="profile-menu" (click)="$event.stopPropagation()">
-        <div class="profile-header">
-          <div class="profile-avatar">
-            <mat-icon>account_circle</mat-icon>
-          </div>
-          <div class="profile-info">
-            <div class="profile-name">{{ currentUserDisplayName }}</div>
-            <div class="profile-email">{{ currentUser.email }}</div>
-          </div>
+          <span
+            class="subtitle"
+            *ngIf="activeChatType === 'groups' && selectedChatId"
+            >Group conversation</span
+          >
+          <span
+            class="subtitle"
+            *ngIf="activeChatType === 'private' && selectedChatId"
+            >Private conversation</span
+          >
+          <span
+            class="subtitle"
+            *ngIf="!selectedChatId && activeChatType !== 'world'"
+            >Select a conversation</span
+          >
         </div>
 
-        <div class="menu-divider"></div>
+        <div class="header-right">
+          <div
+            class="connection-status"
+            [class.connected]="isConnected"
+            [class.disconnected]="!isConnected"
+          >
+            <div class="status-dot"></div>
+            <span>{{ connectionStatus }}</span>
+          </div>
 
-        <div class="menu-items">
-          <button class="menu-item" (click)="onSettingsClick()">
-            <mat-icon>settings</mat-icon>
-            Settings
-          </button>
+          <div class="online-indicator" *ngIf="activeChatType === 'world'">
+            <div class="online-dot"></div>
+            <span>{{ onlineUsersCount }} Online</span>
+          </div>
 
-          <button class="menu-item" (click)="onHelpClick()">
-            <mat-icon>help</mat-icon>
-            Help
+          <button class="profile-button" (click)="toggleMenu()">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
           </button>
+        </div>
+      </div>
+
+      <!-- Profile Menu -->
+      <div
+        class="profile-menu-overlay"
+        *ngIf="isMenuOpen"
+        (click)="toggleMenu()"
+      >
+        <div class="profile-menu" (click)="$event.stopPropagation()">
+          <div class="profile-header">
+            <div class="profile-avatar">
+              <mat-icon>account_circle</mat-icon>
+            </div>
+            <div class="profile-info">
+              <div class="profile-name">{{ currentUserDisplayName }}</div>
+              <div class="profile-email">{{ currentUser.email }}</div>
+            </div>
+          </div>
 
           <div class="menu-divider"></div>
 
-          <button class="menu-item logout" (click)="onLogoutClick()">
-            <mat-icon>logout</mat-icon>
-            Log Out
-          </button>
+          <div class="menu-items">
+            <button class="menu-item" (click)="onSettingsClick()">
+              <mat-icon>settings</mat-icon>
+              Settings
+            </button>
+
+            <button class="menu-item" (click)="onHelpClick()">
+              <mat-icon>help</mat-icon>
+              Help
+            </button>
+
+            <div class="menu-divider"></div>
+
+            <button class="menu-item logout" (click)="onLogoutClick()">
+              <mat-icon>logout</mat-icon>
+              Log Out
+            </button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Messages Area -->
-    <div class="chat-messages">
+      <!-- Chat Content Area -->
       <div
-        *ngFor="let message of messages"
-        class="message-wrapper"
-        [class.own-message]="message.isOwnMessage"
-        [class.system-message]="message.userId === 'system'"
+        class="chat-content-wrapper"
+        *ngIf="activeChatType === 'world' || selectedChatId"
       >
-        <div class="message-bubble">
+        <!-- Messages Area -->
+        <div class="chat-messages">
           <div
-            class="message-header"
-            *ngIf="!message.isOwnMessage && message.userId !== 'system'"
+            *ngFor="let message of messages"
+            class="message-wrapper"
+            [class.own-message]="message.isOwnMessage"
+            [class.system-message]="message.userId === 'system'"
           >
-            <span class="username">{{ message.username }}</span>
-            <span class="country">{{ message.country }}</span>
+            <div class="message-bubble">
+              <div
+                class="message-header"
+                *ngIf="!message.isOwnMessage && message.userId !== 'system'"
+              >
+                <span class="username">{{ message.username }}</span>
+                <span class="country">{{ message.country }}</span>
+              </div>
+
+              <div class="message-text">{{ message.text }}</div>
+
+              <div class="message-time">
+                {{ message.timestamp | date:'HH:mm' }}
+              </div>
+            </div>
           </div>
 
-          <div class="message-text">{{ message.text }}</div>
+          <!-- Empty state for groups/private chats with no messages -->
+          <div
+            class="empty-messages"
+            *ngIf="messages.length === 0 && selectedChatId"
+          >
+            <mat-icon>chat_bubble_outline</mat-icon>
+            <p>No messages yet. Start the conversation!</p>
+          </div>
+        </div>
 
-          <div class="message-time">{{ message.timestamp | date:'HH:mm' }}</div>
+        <!-- Input Area -->
+        <div class="chat-input">
+          <div class="input-container">
+            <div class="user-indicator">
+              <span class="your-flag">{{ currentUserCountry }}</span>
+              <span class="your-name">{{ currentUserDisplayName }}</span>
+            </div>
+
+            <textarea
+              [(ngModel)]="currentMessage"
+              (keydown)="onKeyPress($event)"
+              [placeholder]="messagePlaceholder"
+              class="message-input"
+              rows="1"
+              [disabled]="!currentUser || !isConnected"
+            ></textarea>
+
+            <button
+              (click)="sendMessage()"
+              [disabled]="currentMessage.trim() === '' || !currentUser || !isConnected"
+              class="send-button"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22,2 15,22 11,13 2,9"></polygon>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Input Area -->
-    <div class="chat-input">
-      <div class="input-container">
-        <div class="user-indicator">
-          <span class="your-flag">{{ currentUserCountry }}</span>
-          <span class="your-name">{{ currentUserDisplayName }}</span>
-        </div>
-
-        <textarea
-          [(ngModel)]="currentMessage"
-          (keydown)="onKeyPress($event)"
-          placeholder="Share your message with the world..."
-          class="message-input"
-          rows="1"
-          [disabled]="!currentUser"
-        >
-        </textarea>
-
-        <button
-          (click)="sendMessage()"
-          [disabled]="currentMessage.trim() === '' || !currentUser"
-          class="send-button"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
+      <!-- Select Conversation State -->
+      <div
+        class="select-conversation"
+        *ngIf="activeChatType !== 'world' && !selectedChatId"
+      >
+        <div class="select-content">
+          <mat-icon
+            >{{ activeChatType === 'groups' ? 'group' : 'chat' }}</mat-icon
           >
-            <line x1="22" y1="2" x2="11" y2="13"></line>
-            <polygon points="22,2 15,22 11,13 2,9"></polygon>
-          </svg>
-        </button>
+          <h3>
+            {{ activeChatType === 'groups' ? 'Select a Group' : 'Select a
+            Conversation' }}
+          </h3>
+          <p>
+            {{ activeChatType === 'groups' ? 'Choose a group to start chatting'
+            : 'Choose a conversation or start a new one' }}
+          </p>
+
+          <button
+            class="create-button"
+            (click)="activeChatType === 'groups' ? onCreateGroup() : onStartPrivateChat()"
+          >
+            <mat-icon>add</mat-icon>
+            {{ activeChatType === 'groups' ? 'Create Group' : 'Start Chat' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>

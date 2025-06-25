@@ -1,4 +1,4 @@
-/* home.scss */
+/* home.scss (Updated to accommodate navigation) */
 .chat-container {
   display: flex;
   flex-direction: column;
@@ -6,6 +6,19 @@
   width: 100%;
   margin: 0 auto;
   background-color: transparent;
+  transition: margin-left 0.3s ease;
+
+  &.with-navigation {
+    margin-left: 320px;
+
+    @media (max-width: 768px) {
+      margin-left: 0;
+    }
+  }
+
+  &.mobile {
+    margin-left: 0;
+  }
 }
 
 .chat-header {
@@ -510,11 +523,48 @@
   background: rgba(255, 255, 255, 0.5);
 }
 
+/* Empty state styles for when no chat is selected */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  padding: 2rem;
+
+  mat-icon {
+    font-size: 4rem;
+    width: 4rem;
+    height: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+    opacity: 0.8;
+    font-size: 0.95rem;
+  }
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .chat-container {
     height: 100vh;
     max-width: 100%;
+    margin-left: 0 !important;
+
+    &.with-navigation {
+      margin-left: 0;
+    }
   }
 
   .chat-header {
@@ -528,9 +578,10 @@
     }
 
     .header-right {
-      flex-direction: column;
+      flex-direction: row;
       gap: 0.5rem;
       align-items: center;
+      justify-content: center;
     }
 
     .online-indicator {
@@ -578,5 +629,89 @@
 
   .profile-menu {
     min-width: 260px;
+  }
+}
+
+/* Medium screens */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .chat-container.with-navigation {
+    margin-left: 60px;
+  }
+}
+
+/* Large screens */
+@media (min-width: 1025px) {
+  .chat-container.with-navigation {
+    margin-left: 320px;
+  }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+  .chat-container {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  }
+
+  .message-wrapper:not(.own-message):not(.system-message) .message-bubble {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .message-input {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.2);
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    &:focus {
+      border-color: #667eea;
+      background: rgba(255, 255, 255, 0.15);
+    }
+  }
+
+  .chat-input {
+    background: rgba(0, 0, 0, 0.3);
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Animation for smooth transitions */
+.chat-container {
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Focus styles for accessibility */
+.profile-button:focus,
+.send-button:focus,
+.message-input:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .message-bubble {
+    border: 2px solid;
+  }
+
+  .send-button:disabled {
+    opacity: 0.5;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .online-dot {
+    animation: none;
   }
 }

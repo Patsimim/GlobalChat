@@ -3,21 +3,25 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  width: 100%;
-  margin: 0 auto;
+  width: 100vw;
+  margin: 0;
   background-color: transparent;
-  transition: margin-left 0.3s ease;
-
-  &.with-navigation {
-    margin-left: 320px;
-
-    @media (max-width: 768px) {
-      margin-left: 0;
-    }
-  }
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  padding-left: 0;
+  box-sizing: border-box; /* Added this line */
 
   &.mobile {
-    margin-left: 0;
+    margin-left: 0 !important;
+    width: 100vw;
+    padding-left: 0 !important;
+  }
+
+  /* Non-mobile: use padding instead of margin to eliminate gaps */
+  &:not(.mobile) {
+    padding-left: var(--nav-width, 320px);
+    width: 100vw;
+    box-sizing: border-box;
   }
 }
 
@@ -559,12 +563,8 @@
 @media (max-width: 768px) {
   .chat-container {
     height: 100vh;
-    max-width: 100%;
-    margin-left: 0 !important;
-
-    &.with-navigation {
-      margin-left: 0;
-    }
+    width: 100vw !important;
+    padding-left: 0 !important;
   }
 
   .chat-header {
@@ -632,17 +632,18 @@
   }
 }
 
+/* Remove the old responsive breakpoints */
 /* Medium screens */
 @media (max-width: 1024px) and (min-width: 769px) {
-  .chat-container.with-navigation {
-    margin-left: 60px;
+  .chat-container {
+    /* Will be handled by dynamic margin-left */
   }
 }
 
 /* Large screens */
 @media (min-width: 1025px) {
-  .chat-container.with-navigation {
-    margin-left: 320px;
+  .chat-container {
+    /* Will be handled by dynamic margin-left */
   }
 }
 
@@ -681,7 +682,12 @@
 
 /* Animation for smooth transitions */
 .chat-container {
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Smooth padding transitions when navigation changes */
+  &:not(.mobile) {
+    transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 
 /* Focus styles for accessibility */

@@ -37,12 +37,13 @@ interface Message {
       [isMobile]="isMobile"
       (chatTypeChanged)="onChatTypeChanged($event)"
       (chatSelected)="onChatSelected($event)"
+      (navigationStateChanged)="onNavigationStateChanged($event)"
     ></app-chat-navigation>
 
     <!-- Main Chat Container -->
     <div
       class="chat-container"
-      [class.with-navigation]="true"
+      [style.padding-left.px]="navigationWidth"
       [class.mobile]="isMobile"
     >
       <!-- Loading state -->
@@ -203,6 +204,7 @@ export class Home implements OnInit, OnDestroy {
   currentChatType: string = 'world';
   currentChatId: string = '';
   isMobile: boolean = false;
+  navigationWidth: number = 320; // Default navigation width
 
   // World chat messages
   worldMessages: Message[] = [
@@ -405,6 +407,11 @@ export class Home implements OnInit, OnDestroy {
     this.currentChatType = event.type;
     this.currentChatId = event.id;
     console.log('Chat selected:', event);
+  }
+
+  onNavigationStateChanged(state: { isCollapsed: boolean; width: number }) {
+    this.navigationWidth = state.width;
+    console.log('Navigation state changed:', state);
   }
 
   // Get current messages based on chat type and selection

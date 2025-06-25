@@ -185,6 +185,10 @@ export class ChatNavigationComponent implements OnInit {
   @Input() isMobile: boolean = false;
   @Output() chatTypeChanged = new EventEmitter<string>();
   @Output() chatSelected = new EventEmitter<{ type: string; id: string }>();
+  @Output() navigationStateChanged = new EventEmitter<{
+    isCollapsed: boolean;
+    width: number;
+  }>();
 
   isCollapsed: boolean = false;
   activeChatType: string = 'world';
@@ -278,6 +282,9 @@ export class ChatNavigationComponent implements OnInit {
     window.addEventListener('resize', () => {
       this.checkMobileView();
     });
+
+    // Emit initial state
+    this.emitNavigationState();
   }
 
   checkMobileView() {
@@ -285,16 +292,27 @@ export class ChatNavigationComponent implements OnInit {
     if (this.isMobile) {
       this.isCollapsed = true;
     }
+    this.emitNavigationState();
   }
 
   toggleNavigation() {
     this.isCollapsed = !this.isCollapsed;
+    this.emitNavigationState();
   }
 
   closeNavigation() {
     if (this.isMobile) {
       this.isCollapsed = true;
+      this.emitNavigationState();
     }
+  }
+
+  private emitNavigationState() {
+    const width = this.isMobile ? 0 : this.isCollapsed ? 60 : 320;
+    this.navigationStateChanged.emit({
+      isCollapsed: this.isCollapsed,
+      width: width,
+    });
   }
 
   selectChatType(chatTypeId: string) {
@@ -305,6 +323,7 @@ export class ChatNavigationComponent implements OnInit {
     // Auto-collapse on mobile after selection
     if (this.isMobile && chatTypeId === 'world') {
       this.isCollapsed = true;
+      this.emitNavigationState();
     }
   }
 
@@ -315,6 +334,7 @@ export class ChatNavigationComponent implements OnInit {
     // Auto-collapse on mobile after selection
     if (this.isMobile) {
       this.isCollapsed = true;
+      this.emitNavigationState();
     }
   }
 
@@ -332,6 +352,7 @@ export class ChatNavigationComponent implements OnInit {
     this.router.navigate(['/settings']);
     if (this.isMobile) {
       this.isCollapsed = true;
+      this.emitNavigationState();
     }
   }
 
@@ -340,6 +361,7 @@ export class ChatNavigationComponent implements OnInit {
     console.log('Open profile');
     if (this.isMobile) {
       this.isCollapsed = true;
+      this.emitNavigationState();
     }
   }
 }

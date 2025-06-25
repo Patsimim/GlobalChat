@@ -1,8 +1,17 @@
 // chat-navigation.component.ts
-import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  Output,
+  EventEmitter,
+  Input,
+  OnDestroy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
+import { ChatService, ApiChatRoom, ApiUser } from '../../services/chat.service';
 
 export interface ChatType {
   id: string;
@@ -10,25 +19,6 @@ export interface ChatType {
   icon: string;
   description: string;
   count?: number;
-}
-
-export interface GroupChat {
-  id: string;
-  name: string;
-  lastMessage: string;
-  timestamp: Date;
-  unreadCount: number;
-  avatar?: string;
-}
-
-export interface PrivateChat {
-  id: string;
-  username: string;
-  country: string;
-  lastMessage: string;
-  timestamp: Date;
-  isOnline: boolean;
-  unreadCount: number;
 }
 
 @Component({
@@ -46,6 +36,36 @@ export interface PrivateChat {
       <div class="nav-content" [class.show]="!isCollapsed">
         <!-- Header -->
         <div class="nav-header">
+          <div class="nav-items chat-list">
+            <button
+              *ngFor="let chat of privateChats"
+              class="chat-item"
+              [class.active]="activeChat === chat.id"
+              (click)="selectChat('private', chat.id)"
+            >
+              <div class="chat-avatar">
+                <div
+                  class="status-indicator"
+                  [class.online]="isPrivateUserOnline(chat)"
+                ></div>
+                <span class="flag">{{ getPrivateUserCountry(chat) }}</span>
+              </div>
+              <div class="chat-info">
+                <div class="chat-name">{{ getPrivateUserName(chat) }}</div>
+                <div class="chat-last-message">
+                  {{ getPrivateLastMessage(chat) }}
+                </div>
+              </div>
+              <div class="chat-meta">
+                <div class="chat-time">
+                  {{ getPrivateTimestamp(chat) | date : 'HH:mm' }}
+                </div>
+                <div class="unread-badge" *ngIf="chat.unreadCount > 0">
+                  {{ chat.unreadCount }}
+                </div>
+              </div>
+            </button>
+          </div>
           <div class="logo">
             <mat-icon class="logo-icon">forum</mat-icon>
             <span class="logo-text" *ngIf="!isCollapsed">GlobalChat</span>
@@ -55,7 +75,7 @@ export interface PrivateChat {
         <!-- Chat Types -->
         <div class="nav-section">
           <div class="section-header" *ngIf="!isCollapsed">
-            <span>Chat Types</span>
+            <span>Chat Mode</span>
           </div>
 
           <div class="nav-items">
@@ -101,11 +121,13 @@ export interface PrivateChat {
               </div>
               <div class="chat-info">
                 <div class="chat-name">{{ group.name }}</div>
-                <div class="chat-last-message">{{ group.lastMessage }}</div>
+                <div class="chat-last-message">
+                  {{ getGroupLastMessage(group) }}
+                </div>
               </div>
               <div class="chat-meta">
                 <div class="chat-time">
-                  {{ group.timestamp | date : 'HH:mm' }}
+                  {{ getGroupTimestamp(group) | date : 'HH:mm' }}
                 </div>
                 <div class="unread-badge" *ngIf="group.unreadCount > 0">
                   {{ group.unreadCount }}
@@ -137,17 +159,19 @@ export interface PrivateChat {
               <div class="chat-avatar">
                 <div
                   class="status-indicator"
-                  [class.online]="chat.isOnline"
+                  [class.online]="isPrivateUserOnline(chat)"
                 ></div>
-                <span class="flag">{{ chat.country }}</span>
+                <span class="flag">{{ getPrivateUserCountry(chat) }}</span>
               </div>
               <div class="chat-info">
-                <div class="chat-name">{{ chat.username }}</div>
-                <div class="chat-last-message">{{ chat.lastMessage }}</div>
+                <div class="chat-name">{{ getPrivateUserName(chat) }}</div>
+                <div class="chat-last-message">
+                  {{ getPrivateLastMessage(chat) }}
+                </div>
               </div>
               <div class="chat-meta">
                 <div class="chat-time">
-                  {{ chat.timestamp | date : 'HH:mm' }}
+                  {{ getPrivateTimestamp(chat) | date : 'HH:mm' }}
                 </div>
                 <div class="unread-badge" *ngIf="chat.unreadCount > 0">
                   {{ chat.unreadCount }}
@@ -181,7 +205,7 @@ export interface PrivateChat {
   `,
   styleUrls: ['./chat-navigation.component.scss'],
 })
-export class ChatNavigationComponent implements OnInit {
+export class ChatNavigationComponent implements OnInit, OnDestroy {
   @Input() isMobile: boolean = false;
   @Output() chatTypeChanged = new EventEmitter<string>();
   @Output() chatSelected = new EventEmitter<{ type: string; id: string }>();
@@ -190,9 +214,12 @@ export class ChatNavigationComponent implements OnInit {
     width: number;
   }>();
 
+  private destroy$ = new Subject<void>();
+
   isCollapsed: boolean = false;
   activeChatType: string = 'world';
   activeChat: string = '';
+  onlineUsersCount: number = 0;
 
   chatTypes: ChatType[] = [
     {
@@ -200,79 +227,29 @@ export class ChatNavigationComponent implements OnInit {
       name: 'World Chat',
       icon: 'public',
       description: 'Chat with everyone worldwide',
-      count: 1247,
+      count: 0,
     },
     {
       id: 'groups',
       name: 'Group Chats',
       icon: 'group',
       description: 'Join or create group conversations',
-      count: 12,
+      count: 0,
     },
     {
       id: 'private',
       name: 'Private Messages',
       icon: 'person',
       description: 'One-on-one conversations',
-      count: 5,
+      count: 0,
     },
   ];
 
-  groupChats: GroupChat[] = [
-    {
-      id: 'group1',
-      name: 'Tech Enthusiasts',
-      lastMessage: 'Check out this new framework!',
-      timestamp: new Date(Date.now() - 300000),
-      unreadCount: 3,
-    },
-    {
-      id: 'group2',
-      name: 'Travel Buddies',
-      lastMessage: 'Anyone been to Japan recently?',
-      timestamp: new Date(Date.now() - 600000),
-      unreadCount: 0,
-    },
-    {
-      id: 'group3',
-      name: 'Language Exchange',
-      lastMessage: 'Hola! ¿Cómo están todos?',
-      timestamp: new Date(Date.now() - 900000),
-      unreadCount: 7,
-    },
-  ];
+  groupChats: ApiChatRoom[] = [];
+  privateChats: ApiChatRoom[] = [];
+  onlineUsers: ApiUser[] = [];
 
-  privateChats: PrivateChat[] = [
-    {
-      id: 'user1',
-      username: 'SakuraUser',
-      country: '🇯🇵',
-      lastMessage: 'Thanks for the help!',
-      timestamp: new Date(Date.now() - 180000),
-      isOnline: true,
-      unreadCount: 2,
-    },
-    {
-      id: 'user2',
-      username: 'NYCExplorer',
-      country: '🇺🇸',
-      lastMessage: 'See you tomorrow!',
-      timestamp: new Date(Date.now() - 420000),
-      isOnline: false,
-      unreadCount: 0,
-    },
-    {
-      id: 'user3',
-      username: 'LondonVibes',
-      country: '🇬🇧',
-      lastMessage: 'The weather is lovely today',
-      timestamp: new Date(Date.now() - 720000),
-      isOnline: true,
-      unreadCount: 1,
-    },
-  ];
-
-  constructor(private router: Router) {}
+  constructor(private router: Router, private chatService: ChatService) {}
 
   ngOnInit() {
     // Check if it's mobile view
@@ -285,6 +262,96 @@ export class ChatNavigationComponent implements OnInit {
 
     // Emit initial state
     this.emitNavigationState();
+
+    // Load initial data
+    this.loadChatData();
+
+    // Subscribe to real-time updates
+    this.subscribeToUpdates();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private loadChatData() {
+    // Load group chats
+    this.chatService
+      .loadGroupChats()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.groupChats = response.groups;
+            this.updateChatTypeCount('groups', response.count);
+          }
+        },
+        error: (error) => console.error('Error loading group chats:', error),
+      });
+
+    // Load private chats
+    this.chatService
+      .loadPrivateChats()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.privateChats = response.chats;
+            this.updateChatTypeCount('private', response.count);
+          }
+        },
+        error: (error) => console.error('Error loading private chats:', error),
+      });
+
+    // Load online users
+    this.chatService
+      .loadOnlineUsers()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.onlineUsers = response.users;
+            this.onlineUsersCount = response.count;
+            this.updateChatTypeCount('world', response.count);
+          }
+        },
+        error: (error) => console.error('Error loading online users:', error),
+      });
+  }
+
+  private subscribeToUpdates() {
+    // Subscribe to group chats updates
+    this.chatService.groupChats$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((groups) => {
+        this.groupChats = groups;
+        this.updateChatTypeCount('groups', groups.length);
+      });
+
+    // Subscribe to private chats updates
+    this.chatService.privateChats$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((chats) => {
+        this.privateChats = chats;
+        this.updateChatTypeCount('private', chats.length);
+      });
+
+    // Subscribe to online users updates
+    this.chatService.onlineUsers$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((users) => {
+        this.onlineUsers = users;
+        this.onlineUsersCount = users.length;
+        this.updateChatTypeCount('world', users.length);
+      });
+  }
+
+  private updateChatTypeCount(chatType: string, count: number) {
+    const type = this.chatTypes.find((t) => t.id === chatType);
+    if (type) {
+      type.count = count;
+    }
   }
 
   checkMobileView() {
@@ -339,13 +406,58 @@ export class ChatNavigationComponent implements OnInit {
   }
 
   createNewGroup() {
-    // Emit event or navigate to create group page
+    // Navigate to create group page or open modal
     console.log('Create new group');
+    // You can implement a modal or navigate to a create group page
+    // this.router.navigate(['/chat/create-group']);
   }
 
   startNewChat() {
-    // Emit event or navigate to start new chat page
+    // Navigate to user search page or open modal
     console.log('Start new chat');
+    // You can implement a modal or navigate to a user search page
+    // this.router.navigate(['/chat/search-users']);
+  }
+
+  // Helper methods for template
+  getGroupLastMessage(group: ApiChatRoom): string {
+    return group.lastMessage?.content || 'No messages yet';
+  }
+
+  getGroupTimestamp(group: ApiChatRoom): Date {
+    return group.lastMessage?.timestamp || group.updatedAt;
+  }
+
+  getPrivateUserName(chat: ApiChatRoom): string {
+    return chat.name;
+  }
+
+  getPrivateUserCountry(chat: ApiChatRoom): string {
+    const participant = chat.participants.find(
+      (p) => p.id !== this.getCurrentUserId()
+    );
+    return participant?.country || '🌍';
+  }
+
+  getPrivateLastMessage(chat: ApiChatRoom): string {
+    return chat.lastMessage?.content || 'No messages yet';
+  }
+
+  getPrivateTimestamp(chat: ApiChatRoom): Date {
+    return chat.lastMessage?.timestamp || chat.updatedAt;
+  }
+
+  isPrivateUserOnline(chat: ApiChatRoom): boolean {
+    const participant = chat.participants.find(
+      (p) => p.id !== this.getCurrentUserId()
+    );
+    return participant?.isOnline || false;
+  }
+
+  private getCurrentUserId(): string {
+    // You'll need to get this from your auth service
+    // return this.authService.getCurrentUser()?.id || '';
+    return ''; // Replace with actual implementation
   }
 
   openSettings() {

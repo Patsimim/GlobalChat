@@ -6,6 +6,12 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService, User } from '../services/auth.service';
+import {
+  ChatService,
+  ApiMessage,
+  ApiChatRoom,
+  ApiUser,
+} from '../services/chat.service';
 import { ChatNavigationComponent } from '../components/chat-navigation/chat-navigation.component';
 
 import { MatIconModule } from '@angular/material/icon';
@@ -18,7 +24,7 @@ interface OnlineUser {
 }
 
 interface Message {
-  id: number;
+  id: string;
   text: string;
   username: string;
   userId: string;
@@ -43,7 +49,7 @@ interface Message {
     <!-- Main Chat Container -->
     <div
       class="chat-container"
-      [style.padding-left.px]="navigationWidth"
+      [style.padding-left.px]="isMobile ? 0 : navigationWidth"
       [class.mobile]="isMobile"
     >
       <!-- Loading state -->
@@ -206,145 +212,19 @@ export class Home implements OnInit, OnDestroy {
   isMobile: boolean = false;
   navigationWidth: number = 320; // Default navigation width
 
-  // World chat messages
-  worldMessages: Message[] = [
-    {
-      id: 1,
-      text: 'Welcome to GlobalChat! 🌍 Connect with people worldwide!',
-      username: 'System',
-      userId: 'system',
-      timestamp: new Date(Date.now() - 300000), // 5 minutes ago
-      country: '🌐',
-      isOwnMessage: false,
-    },
-    {
-      id: 2,
-      text: 'Hello everyone! Greetings from Tokyo! 🇯🇵',
-      username: 'SakuraUser',
-      userId: 'user1',
-      timestamp: new Date(Date.now() - 180000), // 3 minutes ago
-      country: '🇯🇵',
-      isOwnMessage: false,
-    },
-    {
-      id: 3,
-      text: 'Good morning from New York! ☀️',
-      username: 'NYCExplorer',
-      userId: 'user2',
-      timestamp: new Date(Date.now() - 120000), // 2 minutes ago
-      country: '🇺🇸',
-      isOwnMessage: false,
-    },
-  ];
+  // API-based data
+  worldMessages: Message[] = [];
+  groupChats: ApiChatRoom[] = [];
+  privateChats: ApiChatRoom[] = [];
+  onlineUsers: ApiUser[] = [];
 
-  // Group chat messages (sample data)
-  groupMessages: { [key: string]: Message[] } = {
-    group1: [
-      {
-        id: 1,
-        text: 'Welcome to Tech Enthusiasts! 💻',
-        username: 'Admin',
-        userId: 'admin',
-        timestamp: new Date(Date.now() - 600000),
-        country: '🤖',
-        isOwnMessage: false,
-      },
-      {
-        id: 2,
-        text: 'Check out this new framework!',
-        username: 'DevMaster',
-        userId: 'dev1',
-        timestamp: new Date(Date.now() - 300000),
-        country: '🇺🇸',
-        isOwnMessage: false,
-      },
-    ],
-    group2: [
-      {
-        id: 1,
-        text: 'Travel planning discussions here! ✈️',
-        username: 'TravelBot',
-        userId: 'bot',
-        timestamp: new Date(Date.now() - 900000),
-        country: '🌍',
-        isOwnMessage: false,
-      },
-    ],
-    group3: [
-      {
-        id: 1,
-        text: '¡Bienvenidos al intercambio de idiomas! 🗣️',
-        username: 'LanguageBot',
-        userId: 'langbot',
-        timestamp: new Date(Date.now() - 1200000),
-        country: '🌐',
-        isOwnMessage: false,
-      },
-    ],
-  };
+  // Message arrays for different chats
+  groupMessages: { [key: string]: Message[] } = {};
+  privateMessages: { [key: string]: Message[] } = {};
 
-  // Private chat messages (sample data)
-  privateMessages: { [key: string]: Message[] } = {
-    user1: [
-      {
-        id: 1,
-        text: 'Hi there! How are you doing?',
-        username: 'SakuraUser',
-        userId: 'user1',
-        timestamp: new Date(Date.now() - 900000),
-        country: '🇯🇵',
-        isOwnMessage: false,
-      },
-      {
-        id: 2,
-        text: 'Thanks for the help!',
-        username: 'SakuraUser',
-        userId: 'user1',
-        timestamp: new Date(Date.now() - 180000),
-        country: '🇯🇵',
-        isOwnMessage: false,
-      },
-    ],
-    user2: [
-      {
-        id: 1,
-        text: 'Hey! Want to grab coffee tomorrow?',
-        username: 'NYCExplorer',
-        userId: 'user2',
-        timestamp: new Date(Date.now() - 600000),
-        country: '🇺🇸',
-        isOwnMessage: false,
-      },
-      {
-        id: 2,
-        text: 'See you tomorrow!',
-        username: 'NYCExplorer',
-        userId: 'user2',
-        timestamp: new Date(Date.now() - 420000),
-        country: '🇺🇸',
-        isOwnMessage: false,
-      },
-    ],
-    user3: [
-      {
-        id: 1,
-        text: 'The weather is lovely today',
-        username: 'LondonVibes',
-        userId: 'user3',
-        timestamp: new Date(Date.now() - 720000),
-        country: '🇬🇧',
-        isOwnMessage: false,
-      },
-    ],
-  };
-
-  onlineUsers: OnlineUser[] = [
-    { id: 'user1', username: 'SakuraUser', country: '🇯🇵', isOnline: true },
-    { id: 'user2', username: 'NYCExplorer', country: '🇺🇸', isOnline: true },
-    { id: 'user3', username: 'LondonVibes', country: '🇬🇧', isOnline: true },
-    { id: 'user4', username: 'ParisLife', country: '🇫🇷', isOnline: true },
-    { id: 'user5', username: 'BerlinTech', country: '🇩🇪', isOnline: true },
-  ];
+  // Loading states
+  isLoadingMessages: boolean = false;
+  isSendingMessage: boolean = false;
 
   currentMessage: string = '';
   isMenuOpen: boolean = false;
@@ -354,6 +234,7 @@ export class Home implements OnInit, OnDestroy {
   constructor(
     private http: HttpClient,
     private authService: AuthService,
+    private chatService: ChatService,
     private router: Router
   ) {}
 
@@ -380,6 +261,9 @@ export class Home implements OnInit, OnDestroy {
         if (!user) {
           // User logged out, redirect to login
           this.router.navigate(['/auth/login']);
+        } else {
+          // User is logged in, initialize chat
+          this.initializeChat();
         }
       });
 
@@ -387,7 +271,111 @@ export class Home implements OnInit, OnDestroy {
     this.loadUserProfile();
   }
 
+  private initializeChat() {
+    // Load initial world messages
+    this.loadWorldMessages();
+
+    // Subscribe to real-time updates
+    this.subscribeToRealTimeUpdates();
+
+    // Join world chat room
+    this.chatService.joinRoom('world');
+  }
+
+  private loadWorldMessages() {
+    this.isLoadingMessages = true;
+    this.chatService
+      .loadWorldMessages(50, 0)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.worldMessages = this.transformApiMessages(response.messages);
+            this.chatService.updateLocalWorldMessages(response.messages);
+          }
+          this.isLoadingMessages = false;
+        },
+        error: (error) => {
+          console.error('Error loading world messages:', error);
+          this.isLoadingMessages = false;
+        },
+      });
+  }
+
+  private subscribeToRealTimeUpdates() {
+    // Subscribe to world messages
+    this.chatService.worldMessages$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((messages) => {
+        this.worldMessages = this.transformApiMessages(messages);
+        setTimeout(() => this.scrollToBottom(), 100);
+      });
+
+    // Subscribe to new message notifications
+    this.chatService.newMessage$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((event) => {
+        console.log('New message received:', event);
+        // Handle notification, sound, etc.
+      });
+
+    // Subscribe to online users
+    this.chatService.onlineUsers$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((users) => {
+        this.onlineUsers = users;
+      });
+  }
+
+  private transformApiMessages(apiMessages: any[]): Message[] {
+    return apiMessages.map((msg) => ({
+      id: msg.id,
+      text: msg.content,
+      username: msg.senderName,
+      userId: msg.senderId,
+      timestamp: new Date(msg.timestamp),
+      country: this.getCountryFlag(msg.senderCountry),
+      isOwnMessage: msg.isOwnMessage,
+    }));
+  }
+
+  private transformApiMessage(apiMessage: any): Message {
+    return {
+      id: apiMessage.id,
+      text: apiMessage.content,
+      username: apiMessage.senderName,
+      userId: apiMessage.senderId,
+      timestamp: new Date(apiMessage.timestamp),
+      country: this.getCountryFlag(apiMessage.senderCountry),
+      isOwnMessage: apiMessage.isOwnMessage,
+    };
+  }
+
+  private getCountryFlag(countryCode: string): string {
+    const countryFlags: { [key: string]: string } = {
+      PH: '🇵🇭',
+      US: '🇺🇸',
+      JP: '🇯🇵',
+      GB: '🇬🇧',
+      FR: '🇫🇷',
+      DE: '🇩🇪',
+      AU: '🇦🇺',
+      BR: '🇧🇷',
+      // Add more countries as needed
+    };
+    return countryFlags[countryCode] || '🌍';
+  }
+
   ngOnDestroy() {
+    // Leave current room
+    if (this.currentChatType === 'world') {
+      this.chatService.leaveRoom('world');
+    } else if (this.currentChatType === 'groups' && this.currentChatId) {
+      this.chatService.leaveRoom('group', this.currentChatId);
+    } else if (this.currentChatType === 'private' && this.currentChatId) {
+      this.chatService.leaveRoom('private', this.currentChatId);
+    }
+
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -400,18 +388,103 @@ export class Home implements OnInit, OnDestroy {
   onChatTypeChanged(chatType: string) {
     this.currentChatType = chatType;
     this.currentChatId = '';
+
+    // Load data based on chat type
+    if (chatType === 'world') {
+      this.chatService.joinRoom('world');
+    } else if (chatType === 'groups') {
+      // Group chats are already loaded in navigation
+    } else if (chatType === 'private') {
+      // Private chats are already loaded in navigation
+    }
+
     console.log('Chat type changed to:', chatType);
   }
 
   onChatSelected(event: { type: string; id: string }) {
     this.currentChatType = event.type;
     this.currentChatId = event.id;
+
+    if (event.type === 'group') {
+      this.loadGroupMessages(event.id);
+      this.chatService.joinRoom('group', event.id);
+    } else if (event.type === 'private') {
+      this.loadPrivateMessages(event.id);
+      this.chatService.joinRoom('private', event.id);
+    }
+
     console.log('Chat selected:', event);
   }
 
   onNavigationStateChanged(state: { isCollapsed: boolean; width: number }) {
     this.navigationWidth = state.width;
     console.log('Navigation state changed:', state);
+  }
+
+  private loadGroupMessages(groupId: string) {
+    this.isLoadingMessages = true;
+    this.chatService
+      .loadGroupMessages(groupId, 50, 0)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.success) {
+            const messages = this.transformApiMessages(response.messages);
+            this.groupMessages[groupId] = messages;
+            this.chatService.updateLocalGroupMessages(
+              groupId,
+              response.messages
+            );
+          }
+          this.isLoadingMessages = false;
+        },
+        error: (error) => {
+          console.error('Error loading group messages:', error);
+          this.isLoadingMessages = false;
+        },
+      });
+
+    // Subscribe to group messages for this specific group
+    this.chatService
+      .getGroupMessages$(groupId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((messages) => {
+        this.groupMessages[groupId] = this.transformApiMessages(messages);
+        setTimeout(() => this.scrollToBottom(), 100);
+      });
+  }
+
+  private loadPrivateMessages(chatId: string) {
+    this.isLoadingMessages = true;
+    this.chatService
+      .loadPrivateMessages(chatId, 50, 0)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.success) {
+            const messages = this.transformApiMessages(response.messages);
+            this.privateMessages[chatId] = messages;
+            this.chatService.updateLocalPrivateMessages(
+              chatId,
+              response.messages
+            );
+          }
+          this.isLoadingMessages = false;
+        },
+        error: (error) => {
+          console.error('Error loading private messages:', error);
+          this.isLoadingMessages = false;
+        },
+      });
+
+    // Subscribe to private messages for this specific chat
+    this.chatService
+      .getPrivateMessages$(chatId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((messages) => {
+        this.privateMessages[chatId] = this.transformApiMessages(messages);
+        setTimeout(() => this.scrollToBottom(), 100);
+      });
   }
 
   // Get current messages based on chat type and selection
@@ -539,7 +612,12 @@ export class Home implements OnInit, OnDestroy {
   }
 
   sendMessage() {
-    if (this.currentMessage.trim() === '' || !this.currentUser) return;
+    if (
+      this.currentMessage.trim() === '' ||
+      !this.currentUser ||
+      this.isSendingMessage
+    )
+      return;
 
     // Don't allow sending if no chat is selected for groups/private
     if (
@@ -550,101 +628,91 @@ export class Home implements OnInit, OnDestroy {
       return;
     }
 
-    // Add user message
-    const userMessage: Message = {
-      id: this.getNextMessageId(),
-      text: this.currentMessage,
-      username: this.currentUserDisplayName,
-      userId: this.currentUser.id,
-      timestamp: new Date(),
-      country: this.currentUserCountry,
-      isOwnMessage: true,
-    };
-
-    // Add to appropriate message array
-    switch (this.currentChatType) {
-      case 'world':
-        this.worldMessages.push(userMessage);
-        break;
-      case 'groups':
-        if (this.currentChatId) {
-          if (!this.groupMessages[this.currentChatId]) {
-            this.groupMessages[this.currentChatId] = [];
-          }
-          this.groupMessages[this.currentChatId].push(userMessage);
-        }
-        break;
-      case 'private':
-        if (this.currentChatId) {
-          if (!this.privateMessages[this.currentChatId]) {
-            this.privateMessages[this.currentChatId] = [];
-          }
-          this.privateMessages[this.currentChatId].push(userMessage);
-        }
-        break;
-    }
-
-    // Clear input
+    const content = this.currentMessage.trim();
     this.currentMessage = '';
+    this.isSendingMessage = true;
 
-    // In a real app, send to server via HTTP/WebSocket
-    // this.http.post(`${this.authService.getApiUrl()}/messages`, userMessage).subscribe();
+    if (this.currentChatType === 'world') {
+      this.chatService
+        .sendWorldMessage(content)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            if (response.success) {
+              // Message will be added via socket event
+              console.log('World message sent successfully');
+            }
+            this.isSendingMessage = false;
+          },
+          error: (error) => {
+            console.error('Error sending world message:', error);
+            this.currentMessage = content; // Restore message on error
+            this.isSendingMessage = false;
+          },
+        });
+    } else if (this.currentChatType === 'groups') {
+      this.chatService
+        .sendGroupMessage(this.currentChatId, content)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            if (response.success) {
+              // Message will be added via socket event
+              console.log('Group message sent successfully');
+            }
+            this.isSendingMessage = false;
+          },
+          error: (error) => {
+            console.error('Error sending group message:', error);
+            this.currentMessage = content; // Restore message on error
+            this.isSendingMessage = false;
+          },
+        });
+    } else if (this.currentChatType === 'private') {
+      // For private messages, we need the recipient ID
+      const chat = this.privateChats.find((c) => c.id === this.currentChatId);
+      if (!chat) {
+        this.isSendingMessage = false;
+        return;
+      }
+
+      const recipientId = chat.participants.find(
+        (p) => p.id !== this.currentUser!.id
+      )?.id;
+      if (!recipientId) {
+        this.isSendingMessage = false;
+        return;
+      }
+
+      this.chatService
+        .sendPrivateMessage(recipientId, content)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            if (response.success) {
+              // Message will be added via socket event
+              console.log('Private message sent successfully');
+            }
+            this.isSendingMessage = false;
+          },
+          error: (error) => {
+            console.error('Error sending private message:', error);
+            this.currentMessage = content; // Restore message on error
+            this.isSendingMessage = false;
+          },
+        });
+    }
 
     // Scroll to bottom
     setTimeout(() => this.scrollToBottom(), 100);
-
-    // Simulate responses only for world chat
-    if (this.currentChatType === 'world') {
-      this.simulateGlobalResponse();
-    }
   }
 
-  private getNextMessageId(): number {
-    const allMessages = [
-      ...this.worldMessages,
-      ...Object.values(this.groupMessages).flat(),
-      ...Object.values(this.privateMessages).flat(),
-    ];
-    return Math.max(...allMessages.map((m) => m.id), 0) + 1;
+  private getNextMessageId(): string {
+    return Date.now().toString() + Math.random().toString(36).substr(2, 9);
   }
 
-  // Demo function - remove in production
-  simulateGlobalResponse() {
-    const responses = [
-      'Nice to meet you! 👋',
-      'Welcome to the global conversation! 🌍',
-      'Hello from my side of the world! 🌟',
-      'Great to have you here! 🎉',
-      "How's the weather where you are? ☀️🌧️",
-    ];
-
-    const randomUsers = [
-      { username: 'TokyoTraveler', country: '🇯🇵', userId: 'demo1' },
-      { username: 'LondonLife', country: '🇬🇧', userId: 'demo2' },
-      { username: 'SydneyVibes', country: '🇦🇺', userId: 'demo3' },
-      { username: 'BrazilFan', country: '🇧🇷', userId: 'demo4' },
-    ];
-
-    setTimeout(() => {
-      const randomUser =
-        randomUsers[Math.floor(Math.random() * randomUsers.length)];
-      const randomResponse =
-        responses[Math.floor(Math.random() * responses.length)];
-
-      const responseMessage: Message = {
-        id: this.getNextMessageId(),
-        text: randomResponse,
-        username: randomUser.username,
-        userId: randomUser.userId,
-        timestamp: new Date(),
-        country: randomUser.country,
-        isOwnMessage: false,
-      };
-
-      this.worldMessages.push(responseMessage);
-      this.scrollToBottom();
-    }, 2000 + Math.random() * 3000); // Random delay 2-5 seconds
-  }
+  // Remove the demo function since we're using real backend
+  // simulateGlobalResponse() { ... } - REMOVED
 
   onKeyPress(event: KeyboardEvent) {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -690,27 +758,6 @@ export class Home implements OnInit, OnDestroy {
     }, 100);
   }
 
-  // Real implementation functions
-  loadGlobalMessages() {
-    const apiUrl = this.authService.getApiUrl();
-    this.http
-      .get<Message[]>(`${apiUrl}/messages/global`)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (messages) => {
-          this.worldMessages = messages;
-          this.scrollToBottom();
-        },
-        error: (error) => {
-          console.error('Failed to load messages:', error);
-        },
-      });
-  }
-
-  // WebSocket connection for real-time updates
-  connectToWebSocket() {
-    // Implementation for WebSocket connection
-    // const socketUrl = this.authService.getSocketUrl();
-    // Connect to WebSocket for real-time messages
-  }
+  // Remove old demo functions since we're using real backend implementation
+  // loadGlobalMessages() and connectToWebSocket() are now implemented above
 }

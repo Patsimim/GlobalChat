@@ -1,18 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SettingOption } from './setting-option';
+import { SettingOptionComponent } from './setting-option';
 
 describe('SettingOption', () => {
-  let component: SettingOption;
-  let fixture: ComponentFixture<SettingOption>;
+  let component: SettingOptionComponent;
+  let fixture: ComponentFixture<SettingOptionComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SettingOption]
-    })
-    .compileComponents();
+      imports: [SettingOptionComponent],
+    }).compileComponents();
 
-    fixture = TestBed.createComponent(SettingOption);
+    fixture = TestBed.createComponent(SettingOptionComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

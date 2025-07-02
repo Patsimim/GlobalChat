@@ -40,12 +40,12 @@ export class SettingOptionComponent implements OnInit {
   ];
 
   languages = [
-    { value: 'en', label: 'English', flag: '🇺🇸' },
-    { value: 'es', label: 'Español', flag: '🇪🇸' },
-    { value: 'fr', label: 'Français', flag: '🇫🇷' },
-    { value: 'de', label: 'Deutsch', flag: '🇩🇪' },
-    { value: 'zh', label: '中文', flag: '🇨🇳' },
-    { value: 'ja', label: '日本語', flag: '🇯🇵' },
+    { value: 'en', label: 'English' },
+    { value: 'es', label: 'Español' },
+    { value: 'fr', label: 'Français' },
+    { value: 'de', label: 'Deutsch' },
+    { value: 'zh', label: 'Chinese' },
+    { value: 'ja', label: 'Japanese' },
   ];
 
   constructor(private formBuilder: FormBuilder, private router: Router) {

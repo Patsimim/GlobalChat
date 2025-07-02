@@ -13,6 +13,7 @@ import {
   ApiUser,
 } from '../services/chat.service';
 import { ChatNavigationComponent } from '../components/chat-navigation/chat-navigation.component';
+import { SettingOptionComponent } from '../setting-option/setting-option';
 
 import { MatIconModule } from '@angular/material/icon';
 
@@ -36,7 +37,13 @@ interface Message {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, ChatNavigationComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatIconModule,
+    ChatNavigationComponent,
+    SettingOptionComponent,
+  ],
   template: `
     <!-- Chat Navigation -->
     <app-chat-navigation
@@ -200,6 +207,12 @@ interface Message {
         </button>
       </div>
     </div>
+
+    <!-- Settings Modal -->
+    <app-setting-option
+      *ngIf="isSettingsModalOpen"
+      (closeSettings)="onSettingsClose()"
+    ></app-setting-option>
   `,
   styleUrls: ['./home.scss'],
 })
@@ -230,6 +243,9 @@ export class Home implements OnInit, OnDestroy {
   isMenuOpen: boolean = false;
   currentUser: User | null = null;
   isLoading: boolean = true;
+
+  // Settings modal state
+  isSettingsModalOpen: boolean = false;
 
   constructor(
     private http: HttpClient,
@@ -723,9 +739,6 @@ export class Home implements OnInit, OnDestroy {
     return Date.now().toString() + Math.random().toString(36).substr(2, 9);
   }
 
-  // Remove the demo function since we're using real backend
-  // simulateGlobalResponse() { ... } - REMOVED
-
   onKeyPress(event: KeyboardEvent) {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
@@ -739,8 +752,11 @@ export class Home implements OnInit, OnDestroy {
 
   onSettingsClick() {
     this.isMenuOpen = false;
-    // Navigate to settings page
-    this.router.navigate(['/setting-option']);
+    this.isSettingsModalOpen = true;
+  }
+
+  onSettingsClose() {
+    this.isSettingsModalOpen = false;
   }
 
   onHelpClick() {
@@ -769,7 +785,4 @@ export class Home implements OnInit, OnDestroy {
       }
     }, 100);
   }
-
-  // Remove old demo functions since we're using real backend implementation
-  // loadGlobalMessages() and connectToWebSocket() are now implemented above
 }

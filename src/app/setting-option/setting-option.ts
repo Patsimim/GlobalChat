@@ -1,10 +1,9 @@
 // setting-option.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-setting-option',
@@ -14,6 +13,8 @@ import { Router } from '@angular/router';
   styleUrl: './setting-option.scss',
 })
 export class SettingOptionComponent implements OnInit {
+  @Output() closeSettings = new EventEmitter<void>();
+
   activeTab: 'general' | 'account' = 'general';
 
   // General Settings
@@ -48,7 +49,7 @@ export class SettingOptionComponent implements OnInit {
     { value: 'ja', label: 'Japanese' },
   ];
 
-  constructor(private formBuilder: FormBuilder, private router: Router) {
+  constructor(private formBuilder: FormBuilder) {
     this.accountForm = this.formBuilder.group({
       name: [
         this.currentUser.name,
@@ -193,9 +194,9 @@ export class SettingOptionComponent implements OnInit {
     localStorage.setItem('language', this.selectedLanguage);
   }
 
-  // Navigation
+  // Navigation - Updated to emit close event instead of router navigation
   goBack(): void {
-    // Navigate back to previous page
-    this.router.navigate(['/home']);
+    // Emit close event to parent component instead of navigating
+    this.closeSettings.emit();
   }
 }

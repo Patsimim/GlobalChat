@@ -1,0 +1,314 @@
+<!-- setting-option.component.html -->
+<div class="settings-container">
+  <!-- Header -->
+  <div class="settings-header">
+    <button class="back-button" (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1>Settings</h1>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="settings-tabs">
+    <button
+      class="tab-button"
+      [class.active]="activeTab === 'general'"
+      (click)="setActiveTab('general')"
+    >
+      <mat-icon>tune</mat-icon>
+      General
+    </button>
+    <button
+      class="tab-button"
+      [class.active]="activeTab === 'account'"
+      (click)="setActiveTab('account')"
+    >
+      <mat-icon>account_circle</mat-icon>
+      Account
+    </button>
+  </div>
+
+  <!-- Settings Content -->
+  <div class="settings-content">
+    <!-- General Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'general'">
+      <div class="settings-section">
+        <h2>Appearance</h2>
+
+        <!-- Theme Selection -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <h3>Theme</h3>
+            <p>Choose your preferred theme</p>
+          </div>
+          <div class="theme-options">
+            <button
+              *ngFor="let theme of themes"
+              class="theme-option"
+              [class.active]="selectedTheme === theme.value"
+              (click)="onThemeChange(theme.value)"
+            >
+              <mat-icon>{{ theme.icon }}</mat-icon>
+              <span>{{ theme.label }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Language Selection -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <h3>Language</h3>
+            <p>Select your preferred language</p>
+          </div>
+          <div class="language-selector">
+            <select
+              class="language-select"
+              [(ngModel)]="selectedLanguage"
+              (change)="onLanguageChange(selectedLanguage)"
+            >
+              <option *ngFor="let lang of languages" [value]="lang.value">
+                {{ lang.flag }} {{ lang.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'account'">
+      <!-- Profile Information -->
+      <div class="settings-section">
+        <h2>Profile Information</h2>
+
+        <div class="profile-card">
+          <div class="profile-avatar">
+            <mat-icon>account_circle</mat-icon>
+          </div>
+
+          <form [formGroup]="accountForm" class="profile-form">
+            <!-- Name Field -->
+            <div class="form-group">
+              <label for="name">Full Name</label>
+              <input
+                type="text"
+                id="name"
+                formControlName="name"
+                [readonly]="!isEditingProfile"
+                [class.editable]="isEditingProfile"
+              />
+              <div
+                class="error-message"
+                *ngIf="accountForm.get('name')?.errors?.['required'] && accountForm.get('name')?.touched"
+              >
+                Name is required
+              </div>
+            </div>
+
+            <!-- Email Field -->
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input
+                type="email"
+                id="email"
+                formControlName="email"
+                [readonly]="!isEditingProfile"
+                [class.editable]="isEditingProfile"
+              />
+              <div
+                class="error-message"
+                *ngIf="accountForm.get('email')?.errors?.['email'] && accountForm.get('email')?.touched"
+              >
+                Please enter a valid email
+              </div>
+            </div>
+
+            <!-- Profile Action Buttons -->
+            <div class="profile-actions">
+              <button
+                *ngIf="!isEditingProfile"
+                type="button"
+                class="btn btn-primary"
+                (click)="toggleEditProfile()"
+              >
+                <mat-icon>edit</mat-icon>
+                Edit Profile
+              </button>
+
+              <div *ngIf="isEditingProfile" class="edit-actions">
+                <button
+                  type="button"
+                  class="btn btn-success"
+                  [disabled]="!accountForm.valid"
+                  (click)="saveProfile()"
+                >
+                  <mat-icon>save</mat-icon>
+                  Save Changes
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  (click)="toggleEditProfile()"
+                >
+                  <mat-icon>cancel</mat-icon>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Security Settings -->
+      <div class="settings-section">
+        <h2>Security</h2>
+
+        <!-- Change Password -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <h3>Password</h3>
+            <p>Change your account password</p>
+          </div>
+
+          <button
+            *ngIf="!isChangingPassword"
+            class="btn btn-outline"
+            (click)="toggleChangePassword()"
+          >
+            <mat-icon>lock</mat-icon>
+            Change Password
+          </button>
+
+          <!-- Password Form -->
+          <form
+            *ngIf="isChangingPassword"
+            [formGroup]="passwordForm"
+            class="password-form"
+          >
+            <div class="form-group">
+              <label for="currentPassword">Current Password</label>
+              <input
+                type="password"
+                id="currentPassword"
+                formControlName="currentPassword"
+                placeholder="Enter current password"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="newPassword">New Password</label>
+              <input
+                type="password"
+                id="newPassword"
+                formControlName="newPassword"
+                placeholder="Enter new password"
+              />
+              <div
+                class="error-message"
+                *ngIf="passwordForm.get('newPassword')?.errors?.['minlength'] && passwordForm.get('newPassword')?.touched"
+              >
+                Password must be at least 6 characters
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="confirmPassword">Confirm New Password</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                formControlName="confirmPassword"
+                placeholder="Confirm new password"
+              />
+              <div
+                class="error-message"
+                *ngIf="passwordForm.get('confirmPassword')?.errors?.['passwordMismatch'] && passwordForm.get('confirmPassword')?.touched"
+              >
+                Passwords do not match
+              </div>
+            </div>
+
+            <div class="password-actions">
+              <button
+                type="button"
+                class="btn btn-success"
+                [disabled]="!passwordForm.valid"
+                (click)="changePassword()"
+              >
+                <mat-icon>save</mat-icon>
+                Update Password
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                (click)="toggleChangePassword()"
+              >
+                <mat-icon>cancel</mat-icon>
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Danger Zone -->
+      <div class="settings-section danger-zone">
+        <h2>Danger Zone</h2>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <h3>Delete Account</h3>
+            <p>Permanently delete your account and all associated data</p>
+          </div>
+
+          <button
+            class="btn btn-danger"
+            (click)="showDeleteAccountConfirmation()"
+          >
+            <mat-icon>delete_forever</mat-icon>
+            Delete Account
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div
+    class="modal-overlay"
+    *ngIf="showDeleteConfirmation"
+    (click)="hideDeleteAccountConfirmation()"
+  >
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Delete Account</h3>
+        <button class="close-button" (click)="hideDeleteAccountConfirmation()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="warning-icon">
+          <mat-icon>warning</mat-icon>
+        </div>
+        <p>Are you sure you want to delete your account?</p>
+        <p>
+          <strong>This action cannot be undone.</strong> All your data will be
+          permanently deleted.
+        </p>
+      </div>
+
+      <div class="modal-actions">
+        <button
+          class="btn btn-secondary"
+          (click)="hideDeleteAccountConfirmation()"
+        >
+          Cancel
+        </button>
+        <button class="btn btn-danger" (click)="deleteAccount()">
+          <mat-icon>delete_forever</mat-icon>
+          Delete Account
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

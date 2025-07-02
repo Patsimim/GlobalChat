@@ -236,7 +236,19 @@ export class Home implements OnInit, OnDestroy {
     private authService: AuthService,
     private chatService: ChatService,
     private router: Router
-  ) {}
+  ) {
+    // Debug authentication
+    const token = this.authService.getToken();
+    const isLoggedIn = this.authService.isLoggedIn();
+
+    console.log('🔑 Token exists:', !!token);
+    console.log('✅ Is logged in:', isLoggedIn);
+    console.log('🔗 API URL:', this.authService.getApiUrl());
+
+    if (token) {
+      console.log('🔑 Token preview:', token.substring(0, 20) + '...');
+    }
+  }
 
   ngOnInit() {
     // Check mobile view
@@ -728,7 +740,7 @@ export class Home implements OnInit, OnDestroy {
   onSettingsClick() {
     this.isMenuOpen = false;
     // Navigate to settings page
-    this.router.navigate(['/settings']);
+    this.router.navigate(['/setting-option']);
   }
 
   onHelpClick() {

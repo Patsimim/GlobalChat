@@ -46,8 +46,8 @@ export interface User {
 })
 export class AuthService {
   private readonly API_URL = `${environment.apiUrl}/auth`;
-  private readonly TOKEN_KEY = 'auth_token';
-  private readonly USER_KEY = 'user_data';
+  private readonly TOKEN_KEY = 'chat_token';
+  private readonly USER_KEY = 'chat_user';
 
   private currentUserSubject = new BehaviorSubject<User | null>(
     this.getUserFromStorage()
@@ -57,9 +57,9 @@ export class AuthService {
   constructor(private http: HttpClient, private router: Router) {
     if (environment.enableLogging) {
       console.log('🔗 Auth API URL:', this.API_URL);
-      console.log('🏷️ App Name:', environment.appName);
-      console.log('📊 Version:', environment.version);
-      console.log('🏗️ Production:', environment.production);
+      // console.log('🏷️ App Name:', environment.appName);
+      // console.log('📊 Version:', environment.version);
+      // console.log('🏗️ Production:', environment.production);
     }
   }
 

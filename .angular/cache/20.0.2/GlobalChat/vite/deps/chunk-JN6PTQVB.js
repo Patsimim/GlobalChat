@@ -16,7 +16,7 @@ import {
   ɵɵdefineInjectable,
   ɵɵdefineInjector,
   ɵɵdefineNgModule
-} from "./chunk-2PP5HVCX.js";
+} from "./chunk-BCPMK6ER.js";
 
 // node_modules/@angular/cdk/fesm2022/directionality-CChdj3az.mjs
 var DIR_DOCUMENT = new InjectionToken("cdk-dir-doc", {
@@ -184,4 +184,4 @@ export {
   Dir,
   BidiModule
 };
-//# sourceMappingURL=chunk-BACBP2I4.js.map
+//# sourceMappingURL=chunk-JN6PTQVB.js.map

@@ -14,6 +14,7 @@ import {
 } from '../services/chat.service';
 import { ChatNavigationComponent } from '../components/chat-navigation/chat-navigation.component';
 import { SettingOptionComponent } from '../setting-option/setting-option';
+import { HelpComponent } from '../help.component/help.component';
 
 import { MatIconModule } from '@angular/material/icon';
 
@@ -43,6 +44,7 @@ interface Message {
     MatIconModule,
     ChatNavigationComponent,
     SettingOptionComponent,
+    HelpComponent,
   ],
   template: `
     <!-- Chat Navigation -->
@@ -213,6 +215,9 @@ interface Message {
       *ngIf="isSettingsModalOpen"
       (closeSettings)="onSettingsClose()"
     ></app-setting-option>
+
+    <!-- Help Modal -->
+    <app-help *ngIf="isHelpModalOpen" (closeHelp)="onHelpClose()"></app-help>
   `,
   styleUrls: ['./home.scss'],
 })
@@ -246,6 +251,9 @@ export class Home implements OnInit, OnDestroy {
 
   // Settings modal state
   isSettingsModalOpen: boolean = false;
+
+  // Help modal state
+  isHelpModalOpen: boolean = false;
 
   constructor(
     private http: HttpClient,
@@ -752,6 +760,7 @@ export class Home implements OnInit, OnDestroy {
 
   onSettingsClick() {
     this.isMenuOpen = false;
+
     this.isSettingsModalOpen = true;
   }
 
@@ -761,8 +770,12 @@ export class Home implements OnInit, OnDestroy {
 
   onHelpClick() {
     this.isMenuOpen = false;
-    // Open help documentation
-    window.open('https://your-help-url.com', '_blank');
+
+    this.isHelpModalOpen = true;
+  }
+
+  onHelpClose() {
+    this.isHelpModalOpen = false;
   }
 
   onLogoutClick() {

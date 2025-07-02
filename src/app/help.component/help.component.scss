@@ -1,0 +1,330 @@
+/* help.component.scss */
+
+/* Modal Overlay - same design as settings */
+.help-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  animation: fadeIn 0.2s ease-out;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+/* Help Modal Card */
+.help-modal-card {
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  background: #20253f;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: modalSlideIn 0.3s ease-out;
+
+  @media (max-width: 768px) {
+    max-width: 95vw;
+    max-height: 85vh;
+  }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Header */
+.help-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  color: #b8c1ec;
+  padding: 2rem 2rem 0 2rem;
+
+  .back-button {
+    background: rgba(255, 255, 255, 0.134);
+    border: none;
+    color: #b8c1ec;
+    padding: 0.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    width: 40px;
+    height: 40px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+    }
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 600;
+  }
+}
+
+/* Help Content */
+.help-content {
+  background: #232946;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  margin: 0 2rem 2rem 2rem;
+  max-height: 65vh;
+  overflow-y: auto;
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    margin: 0 1rem 1rem 1rem;
+  }
+}
+
+/* Welcome Section */
+.welcome-section {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 2rem;
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.1),
+    rgba(184, 193, 236, 0.1)
+  );
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  .welcome-icon {
+    margin-bottom: 1rem;
+
+    mat-icon {
+      font-size: 4rem;
+      width: 4rem;
+      height: 4rem;
+      color: #667eea;
+    }
+  }
+
+  h2 {
+    margin: 0 0 1rem 0;
+    color: #b8c1ec;
+    font-size: 2rem;
+    font-weight: 700;
+  }
+
+  .welcome-text {
+    margin: 0;
+    color: #a0aec0;
+    font-size: 1.1rem;
+    font-weight: 500;
+  }
+}
+
+/* Help Sections */
+.help-section {
+  margin-bottom: 2.5rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &.do-section {
+    border-left-color: #10b981;
+    background: rgba(16, 185, 129, 0.05);
+  }
+
+  &.dont-section {
+    border-left-color: #dc2626;
+    background: rgba(220, 38, 38, 0.05);
+  }
+
+  &.tips-section {
+    border-left-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.05);
+  }
+
+  &.support-section {
+    border-left-color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.05);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+
+    .section-icon {
+      font-size: 1.5rem;
+      width: 1.5rem;
+      height: 1.5rem;
+      color: #667eea;
+    }
+
+    h3 {
+      margin: 0;
+      color: #b8c1ec;
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+  }
+
+  &.do-section .section-icon {
+    color: #10b981;
+  }
+
+  &.dont-section .section-icon {
+    color: #dc2626;
+  }
+
+  &.tips-section .section-icon {
+    color: #f59e0b;
+  }
+
+  &.support-section .section-icon {
+    color: #8b5cf6;
+  }
+
+  p {
+    margin: 0 0 1rem 0;
+    color: #a0aec0;
+    line-height: 1.6;
+    font-size: 0.95rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+/* Help Lists */
+.help-list {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #a0aec0;
+
+  li {
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+    font-size: 0.95rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    strong {
+      color: #b8c1ec;
+      font-weight: 600;
+    }
+  }
+}
+
+/* Support Buttons */
+.support-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+
+  @media (max-width: 568px) {
+    flex-direction: column;
+  }
+}
+
+/* Buttons */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+
+  mat-icon {
+    font-size: 1.1rem;
+  }
+
+  &.btn-primary {
+    background: #667eea;
+    color: white;
+
+    &:hover {
+      background: #5a67d8;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+  }
+
+  &.btn-outline {
+    background: transparent;
+    color: #667eea;
+    border: 2px solid #667eea;
+
+    &:hover {
+      background: #667eea;
+      color: white;
+      transform: translateY(-1px);
+    }
+  }
+}
+
+/* Scrollbar styling */
+.help-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.help-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.help-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.help-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}

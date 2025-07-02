@@ -1,1 +1,118 @@
-<p>help.component works!</p>
+<!-- help.component.html -->
+<div class="help-container" (click)="goBack()">
+  <div class="help-modal-card" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="help-header">
+      <button class="back-button" (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h1>Help & Support</h1>
+    </div>
+
+    <!-- Help Content -->
+    <div class="help-content">
+      <!-- Welcome Section -->
+      <div class="help-section welcome-section">
+        <div class="welcome-icon">
+          <mat-icon>chat</mat-icon>
+        </div>
+        <h2>Welcome to Global Chat!</h2>
+        <p class="welcome-text">
+          Connect with users around the world in real-time.
+        </p>
+      </div>
+
+      <!-- What is Global Chat -->
+      <div class="help-section">
+        <div class="section-header">
+          <mat-icon class="section-icon">info</mat-icon>
+          <h3>What is Global Chat?</h3>
+        </div>
+        <p>
+          Global Chat allows users from different locations to communicate
+          publicly. It's a space for sharing thoughts, asking questions, and
+          engaging with the community.
+        </p>
+      </div>
+
+      <!-- How to Use -->
+      <div class="help-section">
+        <div class="section-header">
+          <mat-icon class="section-icon">build</mat-icon>
+          <h3>How to Use:</h3>
+        </div>
+        <ul class="help-list">
+          <li>
+            Type your message in the input box and press <strong>Send</strong>.
+          </li>
+          <li>Messages are visible to all users in real-time.</li>
+          <li>Use emojis, text, or reactions (if supported).</li>
+        </ul>
+      </div>
+
+      <!-- Do's -->
+      <div class="help-section do-section">
+        <div class="section-header">
+          <mat-icon class="section-icon">check_circle</mat-icon>
+          <h3>Do's:</h3>
+        </div>
+        <ul class="help-list">
+          <li>Be respectful and kind to others.</li>
+          <li>Use clear language to communicate.</li>
+          <li>Stay on topic if there's a designated theme.</li>
+        </ul>
+      </div>
+
+      <!-- Don'ts -->
+      <div class="help-section dont-section">
+        <div class="section-header">
+          <mat-icon class="section-icon">cancel</mat-icon>
+          <h3>Don'ts:</h3>
+        </div>
+        <ul class="help-list">
+          <li>No hate speech, harassment, or bullying.</li>
+          <li>No spamming, flooding, or self-promotion.</li>
+          <li>Don't share personal/private information.</li>
+          <li>Avoid using all caps (seen as shouting).</li>
+        </ul>
+      </div>
+
+      <!-- Tips -->
+      <div class="help-section tips-section">
+        <div class="section-header">
+          <mat-icon class="section-icon">lightbulb</mat-icon>
+          <h3>Tips:</h3>
+        </div>
+        <ul class="help-list">
+          <li>Use username to mention someone (if available).</li>
+          <li>
+            Tap/Click a user's profile to view more or start a private chat.
+          </li>
+          <li>Report inappropriate messages using the ⚠️ or ⋮ menu.</li>
+        </ul>
+      </div>
+
+      <!-- Need More Help -->
+      <div class="help-section support-section">
+        <div class="section-header">
+          <mat-icon class="section-icon">help_outline</mat-icon>
+          <h3>Need more help?</h3>
+        </div>
+        <p>
+          If you have issues or feedback, contact support or visit our help
+          center:
+        </p>
+        <div class="support-buttons">
+          <button class="btn btn-primary" (click)="openSupport()">
+            <mat-icon>email</mat-icon>
+            Contact Support
+          </button>
+          <!-- <button class="btn btn-outline" (click)="openFAQ()">
+            <mat-icon>help</mat-icon>
+            Visit FAQ
+          </button> -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

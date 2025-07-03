@@ -1,7 +1,8 @@
-// chat.service.ts
+// chat.service.ts - Complete service with group creation functionality
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, BehaviorSubject, Subject } from 'rxjs';
+import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
+import { Observable, BehaviorSubject, Subject, of } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { io, Socket } from 'socket.io-client';
 
@@ -32,6 +33,7 @@ export interface ApiChatRoom {
   participants: Array<{
     id: string;
     name: string;
+    username: string;
     avatar?: string;
     isOnline: boolean;
     country: string;
@@ -44,6 +46,7 @@ export interface ApiChatRoom {
     content: string;
     timestamp: Date;
     senderId: string;
+    senderName: string;
   };
   avatar?: string;
   memberCount?: number;
@@ -166,17 +169,80 @@ export class ChatService {
       }
     );
 
-    // Group created
-    this.socket.on('group_created', (data: { group: ApiChatRoom }) => {
-      const currentGroups = this.groupChatsSubject.value;
-      this.groupChatsSubject.next([data.group, ...currentGroups]);
-    });
+    // Setup group socket events
+    this.setupGroupSocketEvents();
 
     // Private chat created
     this.socket.on('private_chat_created', (data: { chat: ApiChatRoom }) => {
       const currentChats = this.privateChatsSubject.value;
       this.privateChatsSubject.next([data.chat, ...currentChats]);
     });
+
+    // Online users updates
+    this.socket.on('users_online_update', (data: { users: ApiUser[] }) => {
+      this.onlineUsersSubject.next(data.users);
+    });
+  }
+
+  // Setup group-specific socket events
+  private setupGroupSocketEvents() {
+    if (!this.socket) return;
+
+    // Group created
+    this.socket.on('group_created', (data: { group: ApiChatRoom }) => {
+      console.log('Group created via socket:', data.group);
+      const currentGroups = this.groupChatsSubject.value;
+      const exists = currentGroups.find((g) => g.id === data.group.id);
+      if (!exists) {
+        this.groupChatsSubject.next([data.group, ...currentGroups]);
+      }
+    });
+
+    // Group updated
+    this.socket.on('group_updated', (data: { group: ApiChatRoom }) => {
+      const currentGroups = this.groupChatsSubject.value;
+      const updatedGroups = currentGroups.map((group) =>
+        group.id === data.group.id ? data.group : group
+      );
+      this.groupChatsSubject.next(updatedGroups);
+    });
+
+    // Group deleted
+    this.socket.on('group_deleted', (data: { groupId: string }) => {
+      const currentGroups = this.groupChatsSubject.value;
+      const updatedGroups = currentGroups.filter(
+        (group) => group.id !== data.groupId
+      );
+      this.groupChatsSubject.next(updatedGroups);
+    });
+
+    // Participant added to group
+    this.socket.on(
+      'group_participant_added',
+      (data: { groupId: string; participant: ApiUser; group: ApiChatRoom }) => {
+        const currentGroups = this.groupChatsSubject.value;
+        const updatedGroups = currentGroups.map((group) =>
+          group.id === data.groupId ? data.group : group
+        );
+        this.groupChatsSubject.next(updatedGroups);
+      }
+    );
+
+    // Participant removed from group
+    this.socket.on(
+      'group_participant_removed',
+      (data: {
+        groupId: string;
+        participantId: string;
+        group: ApiChatRoom;
+      }) => {
+        const currentGroups = this.groupChatsSubject.value;
+        const updatedGroups = currentGroups.map((group) =>
+          group.id === data.groupId ? data.group : group
+        );
+        this.groupChatsSubject.next(updatedGroups);
+      }
+    );
   }
 
   // Observables for components
@@ -238,7 +304,10 @@ export class ChatService {
       success: boolean;
       messages: ApiMessage[];
       pagination: any;
-    }>(`${this.apiUrl}/chat/world/messages`, { params });
+    }>(`${this.apiUrl}/chat/world/messages`, {
+      params,
+      headers: this.getAuthHeaders(),
+    });
   }
 
   sendWorldMessage(
@@ -246,7 +315,8 @@ export class ChatService {
   ): Observable<{ success: boolean; message: ApiMessage }> {
     return this.http.post<{ success: boolean; message: ApiMessage }>(
       `${this.apiUrl}/chat/world/messages`,
-      { content }
+      { content },
+      { headers: this.getAuthHeaders() }
     );
   }
 
@@ -260,22 +330,88 @@ export class ChatService {
       success: boolean;
       groups: ApiChatRoom[];
       count: number;
-    }>(`${this.apiUrl}/chat/groups`);
+    }>(`${this.apiUrl}/chat/groups`, {
+      headers: this.getAuthHeaders(),
+    });
   }
 
-  createGroup(
+  /**
+   * Create a new group chat with FormData (supports file uploads)
+   */
+  createGroup(formData: FormData): Observable<{
+    success: boolean;
+    group?: ApiChatRoom;
+    message?: string;
+  }> {
+    // For FormData, don't set Content-Type header - let browser handle it
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${this.authService.getToken()}`,
+    });
+
+    return this.http
+      .post<any>(`${this.apiUrl}/chat/groups`, formData, {
+        headers,
+      })
+      .pipe(
+        tap((response) => {
+          if (response.success && response.group) {
+            // Add the new group to local state
+            const currentGroups = this.groupChatsSubject.value;
+            this.groupChatsSubject.next([response.group, ...currentGroups]);
+
+            // Emit group created event via socket if connected
+            if (this.socket?.connected) {
+              this.socket.emit('group_created', {
+                groupId: response.group.id,
+                groupName: response.group.name,
+              });
+            }
+          }
+        }),
+        catchError((error) => {
+          console.error('Error creating group:', error);
+          return of({
+            success: false,
+            message: error.error?.message || 'Failed to create group',
+          });
+        })
+      );
+  }
+
+  /**
+   * Create group with simple object (keeping existing method for backward compatibility)
+   */
+  createGroupSimple(
     name: string,
     participants: string[] = [],
     description?: string
-  ): Observable<{ success: boolean; group: ApiChatRoom }> {
-    return this.http.post<{ success: boolean; group: ApiChatRoom }>(
-      `${this.apiUrl}/chat/groups`,
-      {
-        name,
-        participants,
-        description,
-      }
-    );
+  ): Observable<{ success: boolean; group: ApiChatRoom; message?: string }> {
+    return this.http
+      .post<{ success: boolean; group: ApiChatRoom; message?: string }>(
+        `${this.apiUrl}/chat/groups`,
+        {
+          name,
+          participants,
+          description,
+        },
+        { headers: this.getAuthHeaders() }
+      )
+      .pipe(
+        tap((response) => {
+          if (response.success && response.group) {
+            const currentGroups = this.groupChatsSubject.value;
+            this.groupChatsSubject.next([response.group, ...currentGroups]);
+          }
+        }),
+        catchError((error) => {
+          console.error('Error creating group:', error);
+          return of({
+            success: false,
+            group: {} as ApiChatRoom,
+            message: error.error?.message || 'Failed to create group',
+          });
+        })
+      );
   }
 
   loadGroupMessages(
@@ -296,7 +432,10 @@ export class ChatService {
       success: boolean;
       messages: ApiMessage[];
       pagination: any;
-    }>(`${this.apiUrl}/chat/groups/${groupId}/messages`, { params });
+    }>(`${this.apiUrl}/chat/groups/${groupId}/messages`, {
+      params,
+      headers: this.getAuthHeaders(),
+    });
   }
 
   sendGroupMessage(
@@ -305,8 +444,212 @@ export class ChatService {
   ): Observable<{ success: boolean; message: ApiMessage }> {
     return this.http.post<{ success: boolean; message: ApiMessage }>(
       `${this.apiUrl}/chat/groups/${groupId}/messages`,
-      { content }
+      { content },
+      { headers: this.getAuthHeaders() }
     );
+  }
+
+  /**
+   * Get group information by ID
+   */
+  getGroupInfo(groupId: string): Observable<{
+    success: boolean;
+    group?: ApiChatRoom;
+    message?: string;
+  }> {
+    return this.http
+      .get<any>(`${this.apiUrl}/chat/groups/${groupId}`, {
+        headers: this.getAuthHeaders(),
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error getting group info:', error);
+          return of({
+            success: false,
+            message: 'Failed to get group information',
+          });
+        })
+      );
+  }
+
+  /**
+   * Add participants to an existing group
+   */
+  addGroupParticipants(
+    groupId: string,
+    userIds: string[]
+  ): Observable<{
+    success: boolean;
+    message?: string;
+  }> {
+    const body = { userIds };
+
+    return this.http
+      .post<any>(`${this.apiUrl}/chat/groups/${groupId}/participants`, body, {
+        headers: this.getAuthHeaders(),
+      })
+      .pipe(
+        tap((response) => {
+          if (response.success) {
+            // Refresh group data
+            this.loadGroupChats().subscribe();
+          }
+        }),
+        catchError((error) => {
+          console.error('Error adding group participants:', error);
+          return of({
+            success: false,
+            message: 'Failed to add participants',
+          });
+        })
+      );
+  }
+
+  /**
+   * Remove participant from group
+   */
+  removeGroupParticipant(
+    groupId: string,
+    userId: string
+  ): Observable<{
+    success: boolean;
+    message?: string;
+  }> {
+    return this.http
+      .delete<any>(
+        `${this.apiUrl}/chat/groups/${groupId}/participants/${userId}`,
+        {
+          headers: this.getAuthHeaders(),
+        }
+      )
+      .pipe(
+        tap((response) => {
+          if (response.success) {
+            // Refresh group data
+            this.loadGroupChats().subscribe();
+          }
+        }),
+        catchError((error) => {
+          console.error('Error removing group participant:', error);
+          return of({
+            success: false,
+            message: 'Failed to remove participant',
+          });
+        })
+      );
+  }
+
+  /**
+   * Leave a group
+   */
+  leaveGroup(groupId: string): Observable<{
+    success: boolean;
+    message?: string;
+  }> {
+    return this.http
+      .post<any>(
+        `${this.apiUrl}/chat/groups/${groupId}/leave`,
+        {},
+        {
+          headers: this.getAuthHeaders(),
+        }
+      )
+      .pipe(
+        tap((response) => {
+          if (response.success) {
+            // Remove group from local state
+            const currentGroups = this.groupChatsSubject.value;
+            const updatedGroups = currentGroups.filter(
+              (group) => group.id !== groupId
+            );
+            this.groupChatsSubject.next(updatedGroups);
+
+            // Leave socket room
+            this.leaveRoom('group', groupId);
+          }
+        }),
+        catchError((error) => {
+          console.error('Error leaving group:', error);
+          return of({
+            success: false,
+            message: 'Failed to leave group',
+          });
+        })
+      );
+  }
+
+  /**
+   * Update group information
+   */
+  updateGroup(
+    groupId: string,
+    updates: {
+      name?: string;
+      description?: string;
+    }
+  ): Observable<{
+    success: boolean;
+    group?: ApiChatRoom;
+    message?: string;
+  }> {
+    return this.http
+      .put<any>(`${this.apiUrl}/chat/groups/${groupId}`, updates, {
+        headers: this.getAuthHeaders(),
+      })
+      .pipe(
+        tap((response) => {
+          if (response.success && response.group) {
+            // Update local state
+            const currentGroups = this.groupChatsSubject.value;
+            const updatedGroups = currentGroups.map((group) =>
+              group.id === groupId ? response.group : group
+            );
+            this.groupChatsSubject.next(updatedGroups);
+          }
+        }),
+        catchError((error) => {
+          console.error('Error updating group:', error);
+          return of({
+            success: false,
+            message: 'Failed to update group',
+          });
+        })
+      );
+  }
+
+  /**
+   * Delete/disband a group (admin only)
+   */
+  deleteGroup(groupId: string): Observable<{
+    success: boolean;
+    message?: string;
+  }> {
+    return this.http
+      .delete<any>(`${this.apiUrl}/chat/groups/${groupId}`, {
+        headers: this.getAuthHeaders(),
+      })
+      .pipe(
+        tap((response) => {
+          if (response.success) {
+            // Remove group from local state
+            const currentGroups = this.groupChatsSubject.value;
+            const updatedGroups = currentGroups.filter(
+              (group) => group.id !== groupId
+            );
+            this.groupChatsSubject.next(updatedGroups);
+
+            // Leave socket room
+            this.leaveRoom('group', groupId);
+          }
+        }),
+        catchError((error) => {
+          console.error('Error deleting group:', error);
+          return of({
+            success: false,
+            message: 'Failed to delete group',
+          });
+        })
+      );
   }
 
   // PRIVATE CHAT API CALLS
@@ -319,7 +662,9 @@ export class ChatService {
       success: boolean;
       chats: ApiChatRoom[];
       count: number;
-    }>(`${this.apiUrl}/chat/private`);
+    }>(`${this.apiUrl}/chat/private`, {
+      headers: this.getAuthHeaders(),
+    });
   }
 
   startPrivateChat(
@@ -329,7 +674,11 @@ export class ChatService {
       success: boolean;
       chat: ApiChatRoom;
       isNew: boolean;
-    }>(`${this.apiUrl}/chat/private/start`, { participantId });
+    }>(
+      `${this.apiUrl}/chat/private/start`,
+      { participantId },
+      { headers: this.getAuthHeaders() }
+    );
   }
 
   loadPrivateMessages(
@@ -350,7 +699,10 @@ export class ChatService {
       success: boolean;
       messages: ApiMessage[];
       pagination: any;
-    }>(`${this.apiUrl}/chat/private/${chatId}/messages`, { params });
+    }>(`${this.apiUrl}/chat/private/${chatId}/messages`, {
+      params,
+      headers: this.getAuthHeaders(),
+    });
   }
 
   sendPrivateMessage(
@@ -361,10 +713,14 @@ export class ChatService {
       success: boolean;
       message: ApiMessage;
       chatId: string;
-    }>(`${this.apiUrl}/chat/private/messages`, {
-      recipientId,
-      content,
-    });
+    }>(
+      `${this.apiUrl}/chat/private/messages`,
+      {
+        recipientId,
+        content,
+      },
+      { headers: this.getAuthHeaders() }
+    );
   }
 
   // USER AND STATUS API CALLS
@@ -379,39 +735,50 @@ export class ChatService {
       users: ApiUser[];
       count: number;
       socketCount: number;
-    }>(`${this.apiUrl}/chat/online-users`);
+    }>(`${this.apiUrl}/chat/online-users`, {
+      headers: this.getAuthHeaders(),
+    });
   }
 
-  searchUsers(
-    query: string,
-    limit = 10
-  ): Observable<{
+  /**
+   * Search for users by username or email
+   */
+  searchUsers(query: string): Observable<{
     success: boolean;
     users: ApiUser[];
     count: number;
-    query: string;
+    message?: string;
   }> {
-    const params = new HttpParams()
-      .set('q', query)
-      .set('limit', limit.toString());
+    const params = new HttpParams().set('q', query).set('limit', '20');
 
-    return this.http.get<{
-      success: boolean;
-      users: ApiUser[];
-      count: number;
-      query: string;
-    }>(`${this.apiUrl}/chat/search/users`, { params });
+    return this.http
+      .get<any>(`${this.apiUrl}/chat/search/users`, {
+        params,
+        headers: this.getAuthHeaders(),
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error searching users:', error);
+          return of({
+            success: false,
+            users: [],
+            count: 0,
+            message: 'Failed to search users',
+          });
+        })
+      );
   }
 
   getChatStats(): Observable<{ success: boolean; stats: ChatStats }> {
     return this.http.get<{ success: boolean; stats: ChatStats }>(
-      `${this.apiUrl}/chat/stats`
+      `${this.apiUrl}/chat/stats`,
+      { headers: this.getAuthHeaders() }
     );
   }
 
   // SOCKET ROOM MANAGEMENT
   joinRoom(roomType: 'world' | 'group' | 'private', roomId?: string) {
-    if (!this.socket) return;
+    if (!this.socket || !this.socket.connected) return;
 
     if (roomType === 'world') {
       this.socket.emit('join_world_chat');
@@ -423,7 +790,7 @@ export class ChatService {
   }
 
   leaveRoom(roomType: 'world' | 'group' | 'private', roomId?: string) {
-    if (!this.socket) return;
+    if (!this.socket || !this.socket.connected) return;
 
     if (roomType === 'world') {
       this.socket.emit('leave_world_chat');
@@ -469,6 +836,34 @@ export class ChatService {
 
   updateLocalOnlineUsers(users: ApiUser[]) {
     this.onlineUsersSubject.next(users);
+  }
+
+  /**
+   * Get auth headers for HTTP requests
+   */
+  private getAuthHeaders(): HttpHeaders {
+    const token = this.authService.getToken();
+    return new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    });
+  }
+
+  // SOCKET CONNECTION MANAGEMENT
+  connectSocket() {
+    if (!this.socket) {
+      this.initializeSocket();
+    }
+  }
+
+  disconnectSocket() {
+    if (this.socket) {
+      this.socket.disconnect();
+    }
+  }
+
+  isSocketConnected(): boolean {
+    return this.socket?.connected || false;
   }
 
   // CLEANUP

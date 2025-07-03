@@ -1,5 +1,13 @@
-<!-- home.html -->
-<div class="chat-container">
+<!-- home.component.html -->
+<!-- Chat Navigation -->
+<app-chat-navigation
+  (chatTypeChanged)="onChatTypeChanged($event)"
+  (chatSelected)="onChatSelected($event)"
+  (navigationStateChanged)="onNavigationStateChanged($event)"
+></app-chat-navigation>
+
+<!-- Main Chat Container -->
+<div class="chat-container" [style.padding-left.px]="navigationWidth">
   <!-- Loading state -->
   <div *ngIf="isLoading" class="loading-container">
     <div class="loading-spinner">Loading...</div>
@@ -10,14 +18,24 @@
     <!-- Header -->
     <div class="chat-header">
       <div class="header-content">
-        <h1>GlobalChat</h1>
-        <span class="subtitle">Connect with the world</span>
+        <h1>{{ getCurrentChatTitle() }}</h1>
+        <span class="subtitle">{{ getCurrentChatSubtitle() }}</span>
       </div>
       <div class="header-right">
-        <div class="online-indicator">
+        <div class="online-indicator" *ngIf="currentChatType === 'world'">
           <div class="online-dot"></div>
           <span>{{ onlineUsers.length }} Online</span>
         </div>
+
+        <button
+          *ngIf="currentChatType === 'groups' && !currentChatId"
+          class="create-group-btn"
+          (click)="openCreateGroupModal()"
+          title="Create New Group"
+        >
+          <mat-icon>group_add</mat-icon>
+          <span>Create Group</span>
+        </button>
 
         <button class="profile-button" (click)="toggleMenu()">
           <svg
@@ -71,10 +89,75 @@
       </div>
     </div>
 
+    <!-- Empty state for groups without selection -->
+    <div
+      *ngIf="
+        currentChatType === 'groups' &&
+        !currentChatId &&
+        groupChats.length === 0
+      "
+      class="empty-chat-state"
+    >
+      <div class="empty-content">
+        <mat-icon class="empty-icon">group</mat-icon>
+        <h3>No Group Chats Yet</h3>
+        <p>Create your first group to start chatting with multiple people</p>
+        <div class="empty-actions">
+          <button class="create-group-cta" (click)="openCreateGroupModal()">
+            <mat-icon>add</mat-icon>
+            Create Your First Group
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state for groups with selection prompt -->
+    <div
+      *ngIf="
+        currentChatType === 'groups' &&
+        !currentChatId &&
+        groupChats.length > 0
+      "
+      class="empty-chat-state"
+    >
+      <div class="empty-content">
+        <mat-icon class="empty-icon">forum</mat-icon>
+        <h3>Select a Group Chat</h3>
+        <p>Choose a group from the sidebar to start chatting</p>
+        <div class="empty-actions">
+          <button
+            class="create-group-secondary"
+            (click)="openCreateGroupModal()"
+          >
+            <mat-icon>add</mat-icon>
+            Or Create New Group
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state for private chats -->
+    <div
+      *ngIf="currentChatType === 'private' && !currentChatId"
+      class="empty-chat-state"
+    >
+      <div class="empty-content">
+        <mat-icon class="empty-icon">person</mat-icon>
+        <h3>
+          {{ privateChats.length === 0 ? 'No Private Conversations' : 'Select a
+          Conversation' }}
+        </h3>
+        <p>
+          {{ privateChats.length === 0 ? 'Start a private conversation with
+          someone' : 'Choose a conversation from the sidebar' }}
+        </p>
+      </div>
+    </div>
+
     <!-- Messages Area -->
-    <div class="chat-messages">
+    <div class="chat-messages" *ngIf="shouldShowMessages()">
       <div
-        *ngFor="let message of messages"
+        *ngFor="let message of getCurrentMessages()"
         class="message-wrapper"
         [class.own-message]="message.isOwnMessage"
         [class.system-message]="message.userId === 'system'"
@@ -90,13 +173,15 @@
 
           <div class="message-text">{{ message.text }}</div>
 
-          <div class="message-time">{{ message.timestamp | date:'HH:mm' }}</div>
+          <div class="message-time">
+            {{ message.timestamp | date : 'HH:mm' }}
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Input Area -->
-    <div class="chat-input">
+    <div class="chat-input" *ngIf="shouldShowInput()">
       <div class="input-container">
         <div class="user-indicator">
           <span class="your-flag">{{ currentUserCountry }}</span>
@@ -106,19 +191,23 @@
         <textarea
           [(ngModel)]="currentMessage"
           (keydown)="onKeyPress($event)"
-          placeholder="Share your message with the world..."
+          [placeholder]="getInputPlaceholder()"
           class="message-input"
           rows="1"
-          [disabled]="!currentUser"
+          [disabled]="!currentUser || isSendingMessage"
         >
         </textarea>
 
         <button
           (click)="sendMessage()"
-          [disabled]="currentMessage.trim() === '' || !currentUser"
+          [disabled]="
+            currentMessage.trim() === '' || !currentUser || isSendingMessage
+          "
           class="send-button"
         >
+          <div *ngIf="isSendingMessage" class="sending-spinner"></div>
           <svg
+            *ngIf="!isSendingMessage"
             width="20"
             height="20"
             viewBox="0 0 24 24"
@@ -139,9 +228,20 @@
     <p>Please log in to access GlobalChat.</p>
     <button (click)="onGoToLogin()" class="login-button">Go to Login</button>
   </div>
-
-  <app-setting-option
-    *ngIf="isSettingsModalOpen"
-    (closeSettings)="onSettingsClose()"
-  ></app-setting-option>
 </div>
+
+<!-- Create Group Modal -->
+<app-create-group-modal
+  *ngIf="showCreateGroupModal"
+  (groupCreated)="onGroupCreated($event)"
+  (modalClosed)="onCreateGroupModalClosed()"
+></app-create-group-modal>
+
+<!-- Settings Modal -->
+<app-setting-option
+  *ngIf="isSettingsModalOpen"
+  (closeSettings)="onSettingsClose()"
+></app-setting-option>
+
+<!-- Help Modal -->
+<app-help *ngIf="isHelpModalOpen" (closeHelp)="onHelpClose()"></app-help>

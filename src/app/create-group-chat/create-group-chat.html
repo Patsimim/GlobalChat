@@ -1,0 +1,79 @@
+<div class="modal-overlay" (click)="onOverlayClick($event)">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h2>Create New Group</h2>
+      <button class="close-btn" (click)="closeModal()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Modal Content -->
+    <div class="modal-content">
+      <!-- Group Name Section -->
+      <div class="form-section">
+        <label for="groupName" class="section-label"> Group Name * </label>
+        <input
+          id="groupName"
+          type="text"
+          [(ngModel)]="groupName"
+          placeholder="Enter group name..."
+          class="form-input"
+          [class.error]="groupNameError"
+          maxlength="50"
+        />
+        <div class="input-footer">
+          <span *ngIf="groupNameError" class="error-text"
+            >{{ groupNameError }}</span
+          >
+          <span class="char-count">{{ groupName.length }}/50</span>
+        </div>
+      </div>
+
+      <!-- Group Description Section -->
+      <div class="form-section">
+        <label for="groupDescription" class="section-label">
+          Description (Optional)
+        </label>
+        <textarea
+          id="groupDescription"
+          [(ngModel)]="groupDescription"
+          placeholder="What's this group about?"
+          class="form-textarea"
+          rows="3"
+          maxlength="200"
+        ></textarea>
+        <div class="input-footer">
+          <span class="char-count">{{ groupDescription.length }}/200</span>
+        </div>
+      </div>
+
+      <!-- Info Message -->
+      <div class="info-message">
+        <mat-icon>info</mat-icon>
+        <span>You can add members and customize the group after creation.</span>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="modal-footer">
+      <button type="button" class="btn-cancel" (click)="closeModal()">
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="btn-create"
+        (click)="createGroup()"
+        [disabled]="!canCreateGroup() || isCreating"
+      >
+        <span *ngIf="!isCreating">Create Group</span>
+        <span *ngIf="isCreating">Creating...</span>
+      </button>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div *ngIf="isCreating" class="loading-overlay">
+      <div class="loading-spinner"></div>
+    </div>
+  </div>
+</div>

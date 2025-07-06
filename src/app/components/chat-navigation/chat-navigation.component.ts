@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { ChatService, ApiChatRoom, ApiUser } from '../../services/chat.service';
+import { SettingOptionComponent } from '../../setting-option/setting-option';
 
 export interface ChatType {
   id: string;
@@ -24,185 +25,8 @@ export interface ChatType {
 @Component({
   selector: 'app-chat-navigation',
   standalone: true,
-  imports: [CommonModule, MatIconModule],
-  template: `
-    <div class="chat-nav-container" [class.collapsed]="isCollapsed">
-      <!-- Toggle Button -->
-      <button class="nav-toggle" (click)="toggleNavigation()">
-        <mat-icon>{{ isCollapsed ? 'menu' : 'close' }}</mat-icon>
-      </button>
-
-      <!-- Navigation Content -->
-      <div class="nav-content" [class.show]="!isCollapsed">
-        <!-- Header -->
-        <div class="nav-header">
-          <div class="nav-items chat-list">
-            <button
-              *ngFor="let chat of privateChats"
-              class="chat-item"
-              [class.active]="activeChat === chat.id"
-              (click)="selectChat('private', chat.id)"
-            >
-              <div class="chat-avatar">
-                <div
-                  class="status-indicator"
-                  [class.online]="isPrivateUserOnline(chat)"
-                ></div>
-                <span class="flag">{{ getPrivateUserCountry(chat) }}</span>
-              </div>
-              <div class="chat-info">
-                <div class="chat-name">{{ getPrivateUserName(chat) }}</div>
-                <div class="chat-last-message">
-                  {{ getPrivateLastMessage(chat) }}
-                </div>
-              </div>
-              <div class="chat-meta">
-                <div class="chat-time">
-                  {{ getPrivateTimestamp(chat) | date : 'HH:mm' }}
-                </div>
-                <div class="unread-badge" *ngIf="chat.unreadCount > 0">
-                  {{ chat.unreadCount }}
-                </div>
-              </div>
-            </button>
-          </div>
-          <div class="logo">
-            <mat-icon class="logo-icon">forum</mat-icon>
-            <span class="logo-text" *ngIf="!isCollapsed">GlobalChat</span>
-          </div>
-        </div>
-
-        <!-- Chat Types -->
-        <div class="nav-section">
-          <div class="section-header" *ngIf="!isCollapsed">
-            <span>Chat Mode</span>
-          </div>
-
-          <div class="nav-items">
-            <button
-              *ngFor="let chatType of chatTypes"
-              class="nav-item"
-              [class.active]="activeChatType === chatType.id"
-              (click)="selectChatType(chatType.id)"
-              [title]="isCollapsed ? chatType.name : ''"
-            >
-              <mat-icon>{{ chatType.icon }}</mat-icon>
-              <span class="item-text" *ngIf="!isCollapsed">{{
-                chatType.name
-              }}</span>
-              <span class="item-count" *ngIf="!isCollapsed && chatType.count">
-                {{ chatType.count }}
-              </span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Group Chats (only show when Groups is selected) -->
-        <div
-          class="nav-section"
-          *ngIf="activeChatType === 'groups' && !isCollapsed"
-        >
-          <div class="section-header">
-            <span>Group Chats</span>
-            <button class="create-btn" (click)="createNewGroup()">
-              <mat-icon>add</mat-icon>
-            </button>
-          </div>
-
-          <div class="nav-items chat-list">
-            <button
-              *ngFor="let group of groupChats"
-              class="chat-item"
-              [class.active]="activeChat === group.id"
-              (click)="selectChat('group', group.id)"
-            >
-              <div class="chat-avatar">
-                <mat-icon>group</mat-icon>
-              </div>
-              <div class="chat-info">
-                <div class="chat-name">{{ group.name }}</div>
-                <div class="chat-last-message">
-                  {{ getGroupLastMessage(group) }}
-                </div>
-              </div>
-              <div class="chat-meta">
-                <div class="chat-time">
-                  {{ getGroupTimestamp(group) | date : 'HH:mm' }}
-                </div>
-                <div class="unread-badge" *ngIf="group.unreadCount > 0">
-                  {{ group.unreadCount }}
-                </div>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <!-- Private Chats (only show when Private is selected) -->
-        <div
-          class="nav-section"
-          *ngIf="activeChatType === 'private' && !isCollapsed"
-        >
-          <div class="section-header">
-            <span>Private Messages</span>
-            <button class="create-btn" (click)="startNewChat()">
-              <mat-icon>add</mat-icon>
-            </button>
-          </div>
-
-          <div class="nav-items chat-list">
-            <button
-              *ngFor="let chat of privateChats"
-              class="chat-item"
-              [class.active]="activeChat === chat.id"
-              (click)="selectChat('private', chat.id)"
-            >
-              <div class="chat-avatar">
-                <div
-                  class="status-indicator"
-                  [class.online]="isPrivateUserOnline(chat)"
-                ></div>
-                <span class="flag">{{ getPrivateUserCountry(chat) }}</span>
-              </div>
-              <div class="chat-info">
-                <div class="chat-name">{{ getPrivateUserName(chat) }}</div>
-                <div class="chat-last-message">
-                  {{ getPrivateLastMessage(chat) }}
-                </div>
-              </div>
-              <div class="chat-meta">
-                <div class="chat-time">
-                  {{ getPrivateTimestamp(chat) | date : 'HH:mm' }}
-                </div>
-                <div class="unread-badge" *ngIf="chat.unreadCount > 0">
-                  {{ chat.unreadCount }}
-                </div>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <!-- Settings and User Profile -->
-        <div class="nav-footer" *ngIf="!isCollapsed">
-          <button class="nav-item" (click)="openSettings()">
-            <mat-icon>settings</mat-icon>
-            <span class="item-text">Settings</span>
-          </button>
-
-          <button class="nav-item" (click)="openProfile()">
-            <mat-icon>account_circle</mat-icon>
-            <span class="item-text">Profile</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Overlay for mobile -->
-      <div
-        class="nav-overlay"
-        *ngIf="!isCollapsed && isMobile"
-        (click)="closeNavigation()"
-      ></div>
-    </div>
-  `,
+  imports: [CommonModule, MatIconModule, SettingOptionComponent],
+  templateUrl: './chat-navigation.component.html',
   styleUrls: ['./chat-navigation.component.scss'],
 })
 export class ChatNavigationComponent implements OnInit, OnDestroy {
@@ -215,6 +39,8 @@ export class ChatNavigationComponent implements OnInit, OnDestroy {
   }>();
 
   private destroy$ = new Subject<void>();
+
+  isSettingsModalOpen: boolean = false;
 
   isCollapsed: boolean = false;
   activeChatType: string = 'world';
@@ -475,5 +301,13 @@ export class ChatNavigationComponent implements OnInit, OnDestroy {
       this.isCollapsed = true;
       this.emitNavigationState();
     }
+  }
+
+  onSettingsClick(): void {
+    this.isSettingsModalOpen = true;
+  }
+
+  onSettingsClose(): void {
+    this.isSettingsModalOpen = false;
   }
 }

@@ -916,3 +916,166 @@
     }
   }
 }
+
+.clickable-username {
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  user-select: none;
+  position: relative;
+
+  &:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+    color: #007bff;
+  }
+
+  &:active {
+    background-color: rgba(0, 123, 255, 0.2);
+  }
+
+  // Add a subtle indicator that this is interactive
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 1px;
+    background-color: #007bff;
+    transition: width 0.2s ease;
+  }
+
+  &:hover::after {
+    width: 100%;
+  }
+}
+
+// Message bubble improvements for better context menu experience
+.message-bubble {
+  .message-header {
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .username {
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .country {
+      font-size: 14px;
+    }
+  }
+}
+
+// Prevent text selection when right-clicking on usernames
+.message-wrapper {
+  .username {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+}
+
+// Add some visual feedback for the entire message when hovering over username
+.message-wrapper:not(.own-message) {
+  .message-bubble {
+    transition: all 0.2s ease;
+  }
+
+  .username:hover + .country,
+  .username:hover,
+  &:hover .message-bubble {
+    // Subtle highlight when hovering over interactive elements
+  }
+}
+
+// Improve contrast for better accessibility
+.message-header {
+  .username.clickable-username {
+    &:focus {
+      outline: 2px solid #007bff;
+      outline-offset: 2px;
+      background-color: rgba(0, 123, 255, 0.1);
+    }
+  }
+}
+
+// Dark mode support for clickable usernames
+@media (prefers-color-scheme: dark) {
+  .clickable-username {
+    &:hover {
+      background-color: rgba(100, 181, 246, 0.1);
+      color: #64b5f6;
+    }
+
+    &:active {
+      background-color: rgba(100, 181, 246, 0.2);
+    }
+
+    &::after {
+      background-color: #64b5f6;
+    }
+
+    &:focus {
+      outline-color: #64b5f6;
+      background-color: rgba(100, 181, 246, 0.1);
+    }
+  }
+}
+
+// Mobile responsive adjustments
+@media (max-width: 768px) {
+  .clickable-username {
+    padding: 4px 6px;
+    border-radius: 6px;
+
+    &:hover::after {
+      display: none; // Hide the underline effect on mobile
+    }
+  }
+}
+
+// Add a subtle animation when the context menu appears
+.context-menu {
+  animation: contextMenuAppear 0.15s ease-out;
+}
+
+@keyframes contextMenuAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+// Tooltip style for username hover hint
+.clickable-username[title]:hover::before {
+  content: attr(title);
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .clickable-username[title]:hover::before {
+    background: rgba(255, 255, 255, 0.9);
+    color: black;
+  }
+}

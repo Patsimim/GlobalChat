@@ -1,4 +1,4 @@
-// home.component.ts - Complete version
+// home.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -16,6 +16,10 @@ import { ChatNavigationComponent } from '../components/chat-navigation/chat-navi
 import { SettingOptionComponent } from '../setting-option/setting-option';
 import { HelpComponent } from '../help.component/help.component';
 import { CreateGroupModalComponent } from '../create-group-chat/create-group-chat';
+import {
+  ContextMenuComponent,
+  ContextMenuUser,
+} from '../right-click-menu/right-click-menu';
 
 import { MatIconModule } from '@angular/material/icon';
 
@@ -47,6 +51,7 @@ interface Message {
     CreateGroupModalComponent,
     SettingOptionComponent,
     HelpComponent,
+    ContextMenuComponent,
   ],
   templateUrl: './home.html',
   styleUrls: ['./home.scss'],
@@ -64,6 +69,11 @@ export class Home implements OnInit, OnDestroy {
   isSettingsModalOpen: boolean = false;
   isHelpModalOpen: boolean = false;
   isMenuOpen: boolean = false;
+
+  // Context menu states
+  contextMenuVisible: boolean = false;
+  contextMenuPosition: { x: number; y: number } = { x: 0, y: 0 };
+  contextMenuUser: ContextMenuUser | null = null;
 
   // API-based data
   worldMessages: Message[] = [];
@@ -254,6 +264,144 @@ export class Home implements OnInit, OnDestroy {
       // Add more countries as needed
     };
     return countryFlags[countryCode] || '🌍';
+  }
+
+  // Context Menu Event Handlers
+  onUsernameRightClick(event: MouseEvent, message: Message): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Don't show context menu for own messages or system messages
+    if (message.isOwnMessage || message.userId === 'system') {
+      return;
+    }
+
+    // Create context menu user object
+    this.contextMenuUser = {
+      id: message.userId,
+      username: message.username,
+      country: message.country,
+      isOnline: this.isUserOnline(message.userId),
+      isFriend: this.isUserFriend(message.userId),
+      isBlocked: this.isUserBlocked(message.userId),
+    };
+
+    // Set position and show menu
+    this.contextMenuPosition = { x: event.clientX, y: event.clientY };
+    this.contextMenuVisible = true;
+  }
+
+  onContextMenuAction(event: { action: string; user: ContextMenuUser }): void {
+    console.log(
+      'Context menu action:',
+      event.action,
+      'for user:',
+      event.user.username
+    );
+
+    switch (event.action) {
+      case 'profile':
+        this.handleViewProfile(event.user);
+        break;
+      case 'message':
+        this.handleSendPrivateMessage(event.user);
+        break;
+      case 'add_friend':
+        this.handleAddFriend(event.user);
+        break;
+      case 'remove_friend':
+        this.handleRemoveFriend(event.user);
+        break;
+      case 'block':
+        this.handleBlockUser(event.user);
+        break;
+      case 'unblock':
+        this.handleUnblockUser(event.user);
+        break;
+      default:
+        console.log('Unknown action:', event.action);
+    }
+  }
+
+  onContextMenuClosed(): void {
+    this.contextMenuVisible = false;
+    this.contextMenuUser = null;
+  }
+
+  // Context Menu Action Handlers
+  private handleViewProfile(user: ContextMenuUser): void {
+    console.log('Viewing profile for:', user.username);
+    // Implement profile viewing logic
+    // You might want to open a modal or navigate to a profile page
+  }
+
+  private handleSendPrivateMessage(user: ContextMenuUser): void {
+    console.log('Starting private message with:', user.username);
+
+    // Switch to private chat view
+    this.currentChatType = 'private';
+
+    // Check if a private chat already exists with this user
+    const existingChat = this.privateChats.find((chat) =>
+      chat.participants.some((p) => p.id === user.id)
+    );
+
+    if (existingChat) {
+      // Switch to existing chat
+      this.currentChatId = existingChat.id;
+      this.loadPrivateMessages(existingChat.id);
+    } else {
+      // Create new private chat
+      this.createPrivateChat(user.id);
+    }
+  }
+
+  private handleAddFriend(user: ContextMenuUser): void {
+    console.log('Adding friend:', user.username);
+    // Implement add friend logic
+    // You might want to call a service method to add the friend
+    // this.chatService.addFriend(user.id).subscribe(...);
+  }
+
+  private handleRemoveFriend(user: ContextMenuUser): void {
+    console.log('Removing friend:', user.username);
+    // Implement remove friend logic
+    // this.chatService.removeFriend(user.id).subscribe(...);
+  }
+
+  private handleBlockUser(user: ContextMenuUser): void {
+    console.log('Blocking user:', user.username);
+    // Implement block user logic
+    // this.chatService.blockUser(user.id).subscribe(...);
+  }
+
+  private handleUnblockUser(user: ContextMenuUser): void {
+    console.log('Unblocking user:', user.username);
+    // Implement unblock user logic
+    // this.chatService.unblockUser(user.id).subscribe(...);
+  }
+
+  // Helper methods for context menu
+  private isUserOnline(userId: string): boolean {
+    return this.onlineUsers.some((user) => user.id === userId);
+  }
+
+  private isUserFriend(userId: string): boolean {
+    // Implement logic to check if user is a friend
+    // This might come from your chat service or user service
+    return false; // Placeholder
+  }
+
+  private isUserBlocked(userId: string): boolean {
+    // Implement logic to check if user is blocked
+    // This might come from your chat service or user service
+    return false; // Placeholder
+  }
+
+  private createPrivateChat(userId: string): void {
+    // Implement logic to create a new private chat
+    // this.chatService.createPrivateChat(userId).subscribe(...);
+    console.log('Creating private chat with user:', userId);
   }
 
   // Chat Navigation Event Handlers

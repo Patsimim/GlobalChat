@@ -167,7 +167,12 @@
             class="message-header"
             *ngIf="!message.isOwnMessage && message.userId !== 'system'"
           >
-            <span class="username">{{ message.username }}</span>
+            <span
+              class="username clickable-username"
+              (contextmenu)="onUsernameRightClick($event, message)"
+            >
+              {{ message.username }}
+            </span>
             <span class="country">{{ message.country }}</span>
           </div>
 
@@ -229,6 +234,16 @@
     <button (click)="onGoToLogin()" class="login-button">Go to Login</button>
   </div>
 </div>
+
+<!-- Context Menu -->
+<app-context-menu
+  [user]="contextMenuUser"
+  [position]="contextMenuPosition"
+  [isVisible]="contextMenuVisible"
+  [currentUserId]="currentUser?.id || ''"
+  (actionSelected)="onContextMenuAction($event)"
+  (menuClosed)="onContextMenuClosed()"
+></app-context-menu>
 
 <!-- Create Group Modal -->
 <app-create-group-modal

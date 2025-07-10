@@ -1,0 +1,35 @@
+<div
+  #contextMenu
+  class="context-menu"
+  [style.left.px]="position.x"
+  [style.top.px]="position.y"
+  [style.display]="isVisible ? 'block' : 'none'"
+  (click)="$event.stopPropagation()"
+>
+  <div class="context-menu-header" *ngIf="user">
+    <div class="user-info">
+      <mat-icon class="user-avatar">account_circle</mat-icon>
+      <div class="user-details">
+        <span class="username">{{ user.username }}</span>
+        <span class="country" *ngIf="user.country">{{ user.country }}</span>
+      </div>
+      <div class="online-status" *ngIf="user.isOnline" class="online"></div>
+    </div>
+  </div>
+
+  <div class="context-menu-divider"></div>
+
+  <div class="context-menu-items">
+    <button
+      *ngFor="let action of actions"
+      class="context-menu-item"
+      [class.disabled]="action.disabled"
+      [class.divider-after]="action.divider"
+      (click)="handleAction(action)"
+      [disabled]="action.disabled"
+    >
+      <mat-icon>{{ action.icon }}</mat-icon>
+      <span>{{ action.label }}</span>
+    </button>
+  </div>
+</div>
